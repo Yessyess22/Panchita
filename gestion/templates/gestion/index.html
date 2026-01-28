@@ -337,11 +337,13 @@
             <div class="description">Iniciar nueva venta</div>
         </a>
 
+        {% if user.is_staff %}
         <a href="{% url 'producto_index' %}" class="quick-action-btn">
             <div class="icon"><i class="fas fa-boxes"></i></div>
             <div class="title">Gestionar Productos</div>
             <div class="description">Ver, agregar o editar productos</div>
         </a>
+        {% endif %}
 
         <a href="{% url 'venta_index' %}" class="quick-action-btn">
             <div class="icon"><i class="fas fa-list-alt"></i></div>

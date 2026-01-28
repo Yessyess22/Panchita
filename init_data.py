@@ -106,32 +106,40 @@ for metodo_data in metodos_pago_data:
     if created:
         print(f"✓ Método de pago creado: {metodo.nombre}")
 
-# Crear usuario administrador si no existe
+# Crear o actualizar usuario administrador (siempre con contraseña correcta)
 admin_user, created = User.objects.get_or_create(
     username='admin',
     defaults={
         'email': 'admin@panchita.com',
         'is_staff': True,
-        'is_superuser': True
+        'is_superuser': True,
+        'is_active': True,
     }
 )
-if created:
-    admin_user.set_password('admin123')
-    admin_user.save()
-    print(f"✓ Usuario admin creado (password: admin123)")
+admin_user.set_password('admin123')
+admin_user.is_staff = True
+admin_user.is_superuser = True
+admin_user.is_active = True
+admin_user.email = 'admin@panchita.com'
+admin_user.save()
+print(f"✓ Usuario admin listo (password: admin123)" if created else "✓ Usuario admin actualizado (password: admin123)")
 
-# Crear usuario vendedor si no existe
+# Crear o actualizar usuario vendedor/cajero (siempre con contraseña correcta)
 vendedor_user, created = User.objects.get_or_create(
     username='vendedor',
     defaults={
         'email': 'vendedor@panchita.com',
-        'is_staff': False
+        'is_staff': False,
+        'is_active': True,
     }
 )
-if created:
-    vendedor_user.set_password('vendedor123')
-    vendedor_user.save()
-    print(f"✓ Usuario vendedor creado (password: vendedor123)")
+vendedor_user.set_password('vendedor123')
+vendedor_user.is_staff = False
+vendedor_user.is_superuser = False
+vendedor_user.is_active = True
+vendedor_user.email = 'vendedor@panchita.com'
+vendedor_user.save()
+print(f"✓ Usuario vendedor listo (password: vendedor123)" if created else "✓ Usuario vendedor actualizado (password: vendedor123)")
 
 # Crear cliente de ejemplo
 cliente, created = Cliente.objects.get_or_create(

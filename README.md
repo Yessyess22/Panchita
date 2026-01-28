@@ -80,7 +80,11 @@ python manage.py shell < init_data.py
 python manage.py createsuperuser
 
 # 6. Iniciar el servidor de desarrollo
+# Solo esta máquina:
 python manage.py runserver
+
+# Para que otras PCs en la red puedan entrar (recomendado en local):
+python manage.py runserver 0.0.0.0:8000
 ```
 
 ### Opción 2: Sin Docker
@@ -112,7 +116,8 @@ python manage.py runserver
 
 ## Acceso a la Aplicación
 
-- **Aplicación Web:** <http://localhost:8000>
+- **Aplicación Web (en esta máquina):** <http://localhost:8000>
+- **Desde otra máquina en la red:** <http://IP-DE-ESTA-MÁQUINA:8000> (ver más abajo)
 - **Panel de Administración:** <http://localhost:8000/admin>
 
 ### Credenciales por Defecto
@@ -122,10 +127,48 @@ python manage.py runserver
 - Usuario: `admin`
 - Contraseña: `admin123`
 
-**Vendedor:**
+**Vendedor / Cajero:**
 
 - Usuario: `vendedor`
 - Contraseña: `vendedor123`
+
+### Si no puedes ingresar (vendedor o admin)
+
+Si el usuario o la contraseña no funcionan, restablece los usuarios con:
+
+```bash
+cd PanchitaApp
+python manage.py reset_usuarios
+```
+
+Luego intenta de nuevo con `admin` / `admin123` o `vendedor` / `vendedor123`.
+
+También puedes ejecutar de nuevo los datos iniciales (crea categorías, productos, etc. si no existen):
+
+```bash
+python manage.py shell < init_data.py
+```
+
+### Acceso desde otra máquina (misma red)
+
+Para que otra PC o tablet pueda abrir la app en el navegador:
+
+1. **Iniciar el servidor escuchando en todas las interfaces** (no solo localhost):
+
+   ```bash
+   python manage.py runserver 0.0.0.0:8000
+   ```
+
+   Si solo usas `python manage.py runserver`, la app solo responde en la misma PC (localhost).
+
+2. **Averiguar la IP** de la máquina donde corre el servidor:
+   - Windows: `ipconfig` → busca "Dirección IPv4"
+   - Mac/Linux: `ifconfig` o `ip addr`
+
+3. **En la otra máquina**, en el navegador abre: `http://IP:8000`  
+   Ejemplo: si la IP es 192.168.1.10 → `http://192.168.1.10:8000`
+
+4. **Firewall:** si no carga, revisa que el puerto 8000 esté permitido en el firewall de la PC donde corre el servidor.
 
 ## Estructura de la Base de Datos
 

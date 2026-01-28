@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth.decorators import login_required
+from .decorators import staff_required
 from .models import (
     Producto, Categoria, Cliente, Venta, DetalleVenta,
     MetodoPago, Promocion, Pago
@@ -19,12 +20,16 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         
         if user is not None:
-            auth_login(request, user)
-            messages.success(request, f'Bienvenido {user.username}!')
-            next_url = request.GET.get('next', 'index')
-            return redirect(next_url)
+            if not user.is_active:
+                messages.error(request, 'Tu cuenta está desactivada. Contacta al administrador.')
+            else:
+                auth_login(request, user)
+                rol = 'Administrador' if user.is_staff else 'Cajero / Vendedor'
+                messages.success(request, f'Bienvenido, {user.get_full_name() or user.username}. Sesión: {rol}.')
+                next_url = request.GET.get('next', 'index')
+                return redirect(next_url)
         else:
-            messages.error(request, 'Usuario o contraseña incorrectos.')
+            messages.error(request, 'Usuario o contraseña incorrectos. Verifica que el usuario exista y la contraseña sea correcta.')
     
     return render(request, 'gestion/login.html')
 
@@ -130,12 +135,14 @@ def pos_view(request):
     return render(request, 'gestion/pos.html', context)
 
 @login_required
+@staff_required
 def producto_index(request):
     productos = Producto.objects.select_related('categoria').filter(activo=True)
     context = {'productos': productos, 'active': 'productos'}
     return render(request, 'gestion/producto_index.html', context)
 
 @login_required
+@staff_required
 def producto_crear(request):
     if request.method == 'POST':
         try:
@@ -259,6 +266,7 @@ def producto_crear(request):
     return render(request, 'gestion/producto_form.html', {'categorias': categorias, 'active': 'productos'})
 
 @login_required
+@staff_required
 def producto_editar(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
     
@@ -288,6 +296,7 @@ def producto_editar(request, pk):
     return render(request, 'gestion/producto_form.html', context)
 
 @login_required
+@staff_required
 def producto_eliminar(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
     
@@ -305,6 +314,7 @@ def producto_eliminar(request, pk):
 
 
 @login_required
+@staff_required
 def venta_crear(request):
     if request.method == 'POST':
         cliente_id = request.POST.get('cliente_id')

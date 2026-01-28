@@ -6,6 +6,7 @@ __pycache__/
 .Python
 env/
 venv/
+.venv/
 *.egg-info/
 dist/
 build/
@@ -14,7 +15,7 @@ build/
 *.log
 db.sqlite3
 db.sqlite3-journal
-media/
+# media/  → descomentado para subir imágenes de productos a GitHub
 
 # Docker & Database
 mysql_data/
