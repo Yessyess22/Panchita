@@ -1,0 +1,324 @@
+{% extends 'gestion/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'gestion/css/pos.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="pos-container">
+    <!-- Left Panel - Order Summary -->
+    <div class="order-panel">
+        <div class="order-header">
+            <h2><i class="fas fa-shopping-cart"></i> Pedido Actual</h2>
+            <span class="ticket-number">Ticket N°1</span>
+        </div>
+
+        <div class="order-items-header">
+            <span class="col-name">Producto</span>
+            <span class="col-qty">Cant.</span>
+            <span class="col-price">Precio</span>
+            <span class="col-total">Total</span>
+            <span class="col-actions" style="text-align: center; width: 40px;">-</span>
+        </div>
+
+        <div class="order-items">
+            <div class="empty-order">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <p>No hay productos en el pedido</p>
+            </div>
+        </div>
+
+        <div class="order-total">
+            <div class="total-row">
+                <span>Subtotal:</span>
+                <span class="subtotal-amount">Bs. 0.00</span>
+            </div>
+            <div class="total-final">
+                <span>Precio total</span>
+                <span class="total-amount">Bs. 0.00</span>
+            </div>
+        </div>
+
+        <div class="order-actions">
+            <button class="btn-more"><i class="fas fa-ellipsis-h"></i></button>
+            <button class="btn-pay"><i class="fas fa-check"></i> Pagar</button>
+        </div>
+    </div>
+
+    <!-- Right Panel - Products -->
+    <div class="products-panel">
+        <div class="products-header">
+            <div class="search-bar">
+                <input type="text" class="search-input" placeholder="Todos los productos">
+                <button class="btn-search"><i class="fas fa-search"></i></button>
+                <button class="btn-search"><i class="fas fa-barcode"></i></button>
+                <button class="btn-search">Promociones</button>
+            </div>
+
+            <div class="category-tabs">
+                <button class="category-tab active" data-category="all">Todos</button>
+                {% for categoria in categorias %}
+                <button class="category-tab" data-category="{{ categoria.id }}">{{ categoria.nombre }}</button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="products-grid">
+            {% for producto in productos %}
+            <div class="product-card" data-product-id="{{ producto.id }}" data-product-name="{{ producto.nombre }}"
+                data-product-price="{{ producto.precio_final|floatformat:2 }}" data-category="{{ producto.categoria.id }}"
+                style="display: flex; flex-direction: column; overflow: visible;">
+                <div style="width: 100%; height: 130px; min-height: 130px; max-height: 130px; flex-shrink: 0; overflow: hidden; border-radius: 8px 8px 0 0;">
+                    {% if producto.imagen %}
+                    <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" 
+                         style="width: 100%; height: 130px; object-fit: cover; display: block;">
+                    {% else %}
+                    <div style="width: 100%; height: 130px; background: linear-gradient(135deg, #f8d210 0%, #f4c430 100%); display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-drumstick-bite" style="font-size: 3rem; color: white; opacity: 0.5;"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="product-info" style="display: flex !important; visibility: visible !important; opacity: 1 !important; padding: 10px !important; background: white !important; flex-shrink: 0; min-height: 50px; width: 100%; box-sizing: border-box; border-top: 1px solid #eee; border-radius: 0 0 8px 8px;">
+                    <div class="product-name" style="display: block !important; visibility: visible !important; font-size: 0.85rem; font-weight: 600; color: #333; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ producto.nombre }}</div>
+                    <div class="product-price-tag" style="display: block !important; visibility: visible !important; font-size: 0.85rem; font-weight: 700; color: #2c3e50; margin-left: 8px; white-space: nowrap;">Bs. {{ producto.precio_final|floatformat:2 }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div id="paymentModal" class="payment-modal" style="display: none;">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-cash-register"></i> Procesar Pago</h3>
+            <button class="modal-close" onclick="pos.closePaymentModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <div class="payment-summary">
+                <div class="summary-row">
+                    <span>Subtotal:</span>
+                    <span class="modal-subtotal">Bs. 0.00</span>
+                </div>
+                <div class="summary-row total">
+                    <span>Total a Pagar:</span>
+                    <span class="modal-total">Bs. 0.00</span>
+                </div>
+            </div>
+
+            <form id="paymentForm">
+                <div class="form-group">
+                    <label for="cliente_select">Cliente *</label>
+                    <select id="cliente_select" name="cliente_id" required>
+                        <option value="">Seleccione un cliente</option>
+                        {% for cliente in clientes %}
+                        <option value="{{ cliente.id }}">{{ cliente.nombre_completo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="metodo_pago_select">Método de Pago *</label>
+                    <select id="metodo_pago_select" name="metodo_pago_id" required>
+                        <option value="">Seleccione método de pago</option>
+                        {% for metodo in metodos_pago %}
+                        <option value="{{ metodo.id }}">{{ metodo.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="pos.closePaymentModal()">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn-confirm">
+                        <i class="fas fa-check"></i> Confirmar Pago
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .payment-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 9999;
+    }
+
+    .modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+        position: relative;
+        max-width: 500px;
+        margin: 5% auto;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        animation: modalSlideIn 0.3s ease;
+    }
+
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-50px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #f8d210 0%, #e8b004 100%);
+        border-radius: 15px 15px 0 0;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        color: #333;
+        font-size: 1.3rem;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #333;
+        transition: transform 0.2s;
+    }
+
+    .modal-close:hover {
+        transform: rotate(90deg);
+    }
+
+    .modal-body {
+        padding: 2rem;
+    }
+
+    .payment-summary {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+    }
+
+    .summary-row.total {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 2px solid #dee2e6;
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: #f8d210;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .form-group select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.3s;
+    }
+
+    .form-group select:focus {
+        outline: none;
+        border-color: #f8d210;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .btn-cancel,
+    .btn-confirm {
+        flex: 1;
+        padding: 0.75rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .btn-cancel {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-cancel:hover {
+        background: #5a6268;
+    }
+
+    .btn-confirm {
+        background: linear-gradient(135deg, #f8d210 0%, #e8b004 100%);
+        color: #333;
+    }
+
+    .btn-confirm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(248, 210, 16, 0.4);
+    }
+</style>
+
+{% csrf_token %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Pass data to JavaScript
+    window.posData = {
+        procesarPagoUrl: "{% url 'pos_procesar_pago' %}",
+        csrfToken: "{{ csrf_token }}"
+    };
+</script>
+<script src="{% static 'gestion/js/pos.js' %}"></script>
+{% endblock %}

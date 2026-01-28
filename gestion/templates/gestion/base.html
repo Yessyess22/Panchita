@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pollos Panchita - Sistema</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'gestion/css/base.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <nav>
+        <ul>
+            <li><a href="{% url 'index' %}" class="{% if active == 'home' %}active{% endif %}"><i
+                        class="fas fa-drumstick-bite"></i> Pollos Panchita</a></li>
+            <li><a href="{% url 'index' %}" class="{% if active == 'home' %}active{% endif %}">Inicio</a></li>
+            <li><a href="{% url 'pos' %}" class="{% if active == 'pos' %}active{% endif %}">Punto de Venta</a></li>
+            <li><a href="{% url 'producto_index' %}"
+                    class="{% if active == 'productos' %}active{% endif %}">Productos</a></li>
+            <li style="margin-left: auto;"><a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Salir</a>
+            </li>
+        </ul>
+    </nav>
+
+    {% if messages %}
+    <div class="container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

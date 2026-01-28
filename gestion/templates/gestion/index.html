@@ -1,0 +1,387 @@
+{% extends 'gestion/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .dashboard-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .dashboard-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .dashboard-header h1 {
+        color: var(--panchita-dark);
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .dashboard-header p {
+        color: #666;
+        font-size: 1.1rem;
+    }
+
+    /* Tarjeta destacada del total del día */
+    .total-day-card {
+        background: linear-gradient(135deg, var(--panchita-yellow) 0%, #f4c430 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        text-align: center;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        margin-bottom: 2rem;
+        color: var(--panchita-dark);
+    }
+
+    .total-day-card .label {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        opacity: 0.9;
+    }
+
+    .total-day-card .amount {
+        font-size: 3rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    /* Estadísticas del día */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-card .icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: var(--panchita-yellow);
+    }
+
+    .stat-card .value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--panchita-dark);
+        margin: 0.5rem 0;
+    }
+
+    .stat-card .label {
+        color: #666;
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Botones de acceso rápido */
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .quick-action-btn {
+        background: white;
+        border: 3px solid var(--panchita-yellow);
+        border-radius: 15px;
+        padding: 2rem;
+        text-align: center;
+        text-decoration: none;
+        color: var(--panchita-dark);
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 180px;
+    }
+
+    .quick-action-btn:hover {
+        background: var(--panchita-yellow);
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        color: var(--panchita-dark);
+    }
+
+    .quick-action-btn.primary {
+        background: linear-gradient(135deg, var(--panchita-yellow) 0%, #f4c430 100%);
+        border-color: var(--panchita-yellow);
+        color: var(--panchita-dark);
+        font-weight: 700;
+    }
+
+    .quick-action-btn.primary:hover {
+        background: linear-gradient(135deg, #f4c430 0%, var(--panchita-yellow) 100%);
+        transform: scale(1.05);
+    }
+
+    .quick-action-btn .icon {
+        font-size: 3.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .quick-action-btn .title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .quick-action-btn .description {
+        font-size: 0.9rem;
+        color: #666;
+        opacity: 0.8;
+    }
+
+    .quick-action-btn.primary .description {
+        color: var(--panchita-dark);
+        opacity: 0.9;
+    }
+
+    /* Lista de ventas recientes */
+    .recent-sales {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .recent-sales-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #eee;
+    }
+
+    .recent-sales-header h2 {
+        color: var(--panchita-dark);
+        font-size: 1.5rem;
+        margin: 0;
+    }
+
+    .sales-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .sales-list-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        border-bottom: 1px solid #eee;
+        transition: background-color 0.2s ease;
+    }
+
+    .sales-list-item:last-child {
+        border-bottom: none;
+    }
+
+    .sales-list-item:hover {
+        background: #f9f9f9;
+    }
+
+    .sale-info {
+        flex: 1;
+    }
+
+    .sale-client {
+        font-weight: 600;
+        color: var(--panchita-dark);
+        margin-bottom: 0.25rem;
+    }
+
+    .sale-date {
+        font-size: 0.85rem;
+        color: #666;
+    }
+
+    .sale-amount {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--panchita-yellow);
+    }
+
+    .empty-sales {
+        text-align: center;
+        padding: 3rem;
+        color: #999;
+    }
+
+    .empty-sales i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 1rem;
+        }
+
+        .dashboard-header h1 {
+            font-size: 2rem;
+        }
+
+        .total-day-card .amount {
+            font-size: 2rem;
+        }
+
+        .quick-actions {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <h1><i class="fas fa-drumstick-bite"></i> Pollos Panchita</h1>
+        <p>Panel de Control - {{ hoy|date:"d/m/Y" }} ({{ ahora|date:"H:i" }})</p>
+        {% if total_ventas_general > 0 and total_ventas_hoy == 0 %}
+        <div style="background: #fff3cd; color: #856404; padding: 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.9rem;">
+            <i class="fas fa-info-circle"></i> <strong>Información:</strong> Hay {{ total_ventas_general }} venta(s) en total, pero ninguna detectada para hoy ({{ hoy|date:"d/m/Y" }}).
+            {% if todas_las_ventas %}
+            <br><br><strong>Últimas ventas registradas:</strong>
+            <ul style="margin: 0.5rem 0 0 1.5rem; padding: 0;">
+                {% for venta in todas_las_ventas|slice:":3" %}
+                <li>Venta #{{ venta.id }}: {{ venta.fecha|date:"d/m/Y H:i" }} - Fecha guardada: {{ venta.fecha.date|date:"d/m/Y" }} - Estado: {{ venta.get_estado_display }}</li>
+                {% endfor %}
+            </ul>
+            <br><small>Si acabas de hacer una venta y no aparece, recarga la página. Si el problema persiste, puede ser un tema de zona horaria.</small>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Tarjeta destacada del total del día -->
+    <div class="total-day-card">
+        <div class="label">Total Recaudado Hoy</div>
+        <div class="amount">Bs. {{ total_recaudado_hoy|floatformat:2 }}</div>
+        {% if total_pendiente_hoy > 0 %}
+        <div style="margin-top: 1rem; font-size: 1rem; opacity: 0.9;">
+            <i class="fas fa-clock"></i> Pendiente: Bs. {{ total_pendiente_hoy|floatformat:2 }}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Estadísticas del día -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="icon"><i class="fas fa-shopping-cart"></i></div>
+            <div class="value">{{ total_ventas_hoy }}</div>
+            <div class="label">Total Ventas Hoy</div>
+            {% if total_ventas_completadas > 0 or total_ventas_pendientes > 0 %}
+            <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #666;">
+                <span style="color: #28a745;">✓ {{ total_ventas_completadas }}</span>
+                {% if total_ventas_pendientes > 0 %}
+                <span style="color: #ffc107;"> • ⏳ {{ total_ventas_pendientes }}</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="stat-card">
+            <div class="icon"><i class="fas fa-box"></i></div>
+            <div class="value">{{ productos_vendidos_hoy }}</div>
+            <div class="label">Productos Vendidos</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="icon"><i class="fas fa-chart-line"></i></div>
+            <div class="value">Bs. {{ promedio_venta|floatformat:2 }}</div>
+            <div class="label">Promedio por Venta</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="icon"><i class="fas fa-warehouse"></i></div>
+            <div class="value">{{ total_productos }}</div>
+            <div class="label">Productos Activos</div>
+        </div>
+    </div>
+
+    <!-- Botones de acceso rápido -->
+    <div class="quick-actions">
+        <a href="{% url 'pos' %}" class="quick-action-btn primary">
+            <div class="icon"><i class="fas fa-cash-register"></i></div>
+            <div class="title">Punto de Venta</div>
+            <div class="description">Iniciar nueva venta</div>
+        </a>
+
+        <a href="{% url 'producto_index' %}" class="quick-action-btn">
+            <div class="icon"><i class="fas fa-boxes"></i></div>
+            <div class="title">Gestionar Productos</div>
+            <div class="description">Ver, agregar o editar productos</div>
+        </a>
+
+        <a href="{% url 'venta_index' %}" class="quick-action-btn">
+            <div class="icon"><i class="fas fa-list-alt"></i></div>
+            <div class="title">Ver Todas las Ventas</div>
+            <div class="description">Historial completo de ventas</div>
+        </a>
+    </div>
+
+    <!-- Lista de ventas recientes del día -->
+    <div class="recent-sales">
+        <div class="recent-sales-header">
+            <h2><i class="fas fa-clock"></i> Ventas Recientes de Hoy</h2>
+        </div>
+
+        {% if ultimas_ventas_hoy %}
+        <ul class="sales-list">
+            {% for venta in ultimas_ventas_hoy %}
+            <li class="sales-list-item">
+                <div class="sale-info">
+                    <div class="sale-client">
+                        {{ venta.cliente.nombre_completo }}
+                        {% if venta.estado == 'completado' %}
+                        <span style="display: inline-block; margin-left: 0.5rem; padding: 0.2rem 0.5rem; background: #d4edda; color: #155724; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">✓ Completada</span>
+                        {% elif venta.estado == 'pendiente' %}
+                        <span style="display: inline-block; margin-left: 0.5rem; padding: 0.2rem 0.5rem; background: #fff3cd; color: #856404; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">⏳ Pendiente</span>
+                        {% endif %}
+                    </div>
+                    <div class="sale-date">{{ venta.fecha|date:"H:i" }} - Venta #{{ venta.id }}</div>
+                </div>
+                <div class="sale-amount">Bs. {{ venta.total|floatformat:2 }}</div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="empty-sales">
+            <i class="fas fa-shopping-cart"></i>
+            <p>No hay ventas registradas hoy</p>
+            <p style="font-size: 0.9rem; margin-top: 0.5rem;">¡Comienza a vender desde el Punto de Venta!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

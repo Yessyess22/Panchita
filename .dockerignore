@@ -1,0 +1,8 @@
+mysql_data/
+__pycache__/
+*.pyc
+.git/
+.env
+venv/
+.idea/
+.vscode/

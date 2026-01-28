@@ -1,0 +1,173 @@
+{% extends 'gestion/base.html' %}
+{% block content %}
+<div class="container"
+    style="max-width: 800px; margin: 2rem auto; padding: 2rem; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+    <h2 style="margin-bottom: 1.5rem; color: #333; font-weight: 700;">
+        {% if producto %}<i class="fas fa-edit"></i> Editar Producto{% else %}<i class="fas fa-plus-circle"></i> Nuevo
+        Producto{% endif %}
+    </h2>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #555;">Nombre del Producto
+                *</label>
+            <input type="text" name="nombre" class="form-control" 
+                value="{% if form_data %}{{ form_data.nombre }}{% else %}{{ producto.nombre|default:'' }}{% endif %}" 
+                required
+                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #555;">Descripción</label>
+            <textarea name="descripcion" rows="3" class="form-control"
+                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">{% if form_data %}{{ form_data.descripcion }}{% else %}{{ producto.descripcion|default:'' }}{% endif %}</textarea>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #555;">Costo (Bs.)
+                    *</label>
+                <input type="number" step="0.01" name="costo" class="form-control"
+                    value="{% if form_data %}{{ form_data.costo }}{% else %}{{ producto.costo|default:'' }}{% endif %}" 
+                    required min="0"
+                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #555;">Precio de Venta
+                    (Bs.) *</label>
+                <input type="number" step="0.01" name="precio_venta" class="form-control"
+                    value="{% if form_data %}{{ form_data.precio_venta }}{% else %}{{ producto.precio_venta|default:'' }}{% endif %}" 
+                    required min="0.01"
+                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #555;">Descuento
+                    (%)</label>
+                <input type="number" step="0.01" name="descuento" class="form-control"
+                    value="{% if form_data %}{{ form_data.descuento|default:'0' }}{% else %}{{ producto.descuento|default:'0' }}{% endif %}"
+                    min="0" max="100"
+                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #555;">Stock Inicial
+                    *</label>
+                <input type="number" name="stock" class="form-control" 
+                    value="{% if form_data %}{{ form_data.stock|default:'0' }}{% else %}{{ producto.stock|default:'0' }}{% endif %}" 
+                    required min="0"
+                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+            </div>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #555;">Categoría *</label>
+            <select name="categoria_id" required
+                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; background-color: white;">
+                <option value="">Seleccione una categoría</option>
+                {% for categoria in categorias %}
+                <option value="{{ categoria.id }}" 
+                    {% if form_data and form_data.categoria_id == categoria.id|stringformat:"s" %}selected
+                    {% elif producto and producto.categoria_id == categoria.id %}selected{% endif %}>
+                    {{ categoria.nombre }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="margin-bottom: 2rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #555;">Imagen del
+                Producto</label>
+            <input type="file" name="imagen" accept="image/*" class="form-control"
+                style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem;">
+            {% if producto.imagen %}
+            <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #666;">
+                Imagen actual: {{ producto.imagen.name }}
+            </div>
+            {% endif %}
+        </div>
+
+        <div style="display: flex; gap: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
+            <button type="submit" id="submit-btn" class="btn"
+                style="flex: 1; background: #f8d210; color: #333; padding: 1rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem; transition: all 0.3s ease;">
+                {% if producto %}Actualizar Producto{% else %}Guardar Producto{% endif %}
+            </button>
+            <a href="{% url 'producto_index' %}" class="btn"
+                style="flex: 1; background: #6c757d; color: white; padding: 1rem; border-radius: 8px; text-decoration: none; display: flex; align-items: center; justify-content: center; font-weight: 600; transition: all 0.3s ease;">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+<style>
+    .btn:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+</style>
+
+<script>
+    // Asegurar que el formulario se envíe correctamente
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        const submitBtn = document.getElementById('submit-btn');
+        
+        if (form && submitBtn) {
+            form.addEventListener('submit', function(e) {
+                // Validar que todos los campos requeridos estén llenos
+                const nombre = form.querySelector('[name="nombre"]').value.trim();
+                const costo = form.querySelector('[name="costo"]').value;
+                const precioVenta = form.querySelector('[name="precio_venta"]').value;
+                const categoria = form.querySelector('[name="categoria_id"]').value;
+                const stock = form.querySelector('[name="stock"]').value;
+                
+                if (!nombre) {
+                    e.preventDefault();
+                    alert('Por favor ingrese el nombre del producto');
+                    return false;
+                }
+                
+                if (!costo || parseFloat(costo) < 0) {
+                    e.preventDefault();
+                    alert('Por favor ingrese un costo válido (mayor o igual a 0)');
+                    return false;
+                }
+                
+                if (!precioVenta || parseFloat(precioVenta) <= 0) {
+                    e.preventDefault();
+                    alert('Por favor ingrese un precio de venta válido (mayor a 0)');
+                    return false;
+                }
+                
+                if (!categoria) {
+                    e.preventDefault();
+                    alert('Por favor seleccione una categoría');
+                    return false;
+                }
+                
+                if (stock === '' || parseInt(stock) < 0) {
+                    e.preventDefault();
+                    alert('Por favor ingrese un stock válido (mayor o igual a 0)');
+                    return false;
+                }
+                
+                // Deshabilitar el botón para evitar doble envío
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+                
+                // Permitir que el formulario se envíe normalmente
+                return true;
+            });
+        }
+    });
+</script>
+{% endblock %}
