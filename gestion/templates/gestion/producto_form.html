@@ -83,9 +83,12 @@
                 Producto</label>
             <input type="file" name="imagen" accept="image/*" class="form-control"
                 style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem;">
-            {% if producto.imagen %}
-            <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #666;">
-                Imagen actual: {{ producto.imagen.name }}
+            {% if producto and producto.imagen %}
+            <div style="margin-top: 0.75rem; padding: 0.75rem; background: #f8f9fa; border-radius: 8px; border: 1px solid #eee;">
+                <div style="font-size: 0.85rem; font-weight: 600; color: #555; margin-bottom: 0.5rem;">Imagen actual (se mantiene si no eliges otra):</div>
+                <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" 
+                     style="max-width: 200px; max-height: 150px; object-fit: contain; border-radius: 8px; border: 1px solid #ddd;">
+                <div style="font-size: 0.8rem; color: #666; margin-top: 0.25rem;">{{ producto.imagen.name }}</div>
             </div>
             {% endif %}
         </div>

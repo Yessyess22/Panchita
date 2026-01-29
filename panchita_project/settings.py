@@ -113,8 +113,8 @@ STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = []
 
-# Media files (User uploaded files)
-MEDIA_URL = 'media/'
+# Media files (User uploaded files) - URL con / para que las imágenes carguen desde cualquier ruta (POS, etc.)
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
