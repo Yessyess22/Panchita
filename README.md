@@ -114,6 +114,52 @@ python manage.py shell < init_data.py
 python manage.py runserver
 ```
 
+## Subir y clonar el proyecto (GitHub)
+
+Para que **lo que ves en tu PC se vea igual al clonar en otra**:
+
+### 1. Siempre subir los cambios a GitHub
+
+Después de modificar código, estilos o archivos, **debes hacer commit y push**. Si no haces push, GitHub no tiene tus cambios y al clonar se verá la versión antigua.
+
+```bash
+cd PanchitaApp   # o la carpeta donde está el proyecto (donde está manage.py)
+git add -A
+git commit -m "Descripción de los cambios"
+git push origin main
+```
+
+Hasta que ejecutes `git push origin main`, **nadie que clone el repo verá tus últimas actualizaciones**.
+
+### 2. Al clonar en otra PC
+
+```bash
+git clone https://github.com/Yessyess22/Panchita.git
+cd Panchita
+```
+
+La carpeta `Panchita` tendrá todo el proyecto (manage.py, gestion/, media/, etc.). Luego:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate   # En Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py reset_usuarios
+python manage.py runserver
+```
+
+Abre `http://localhost:8000`. Si ya habías clonado antes y quieres la última versión:
+
+```bash
+cd Panchita
+git pull origin main
+```
+
+Luego reinicia el servidor y, si hace falta, recarga la página con **Ctrl+Shift+R** (recarga forzada sin caché) para ver los estilos y cambios nuevos.
+
+---
+
 ## Acceso a la Aplicación
 
 - **Aplicación Web (en esta máquina):** <http://localhost:8000>

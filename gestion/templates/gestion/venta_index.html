@@ -89,12 +89,12 @@
     .filter-group select:focus,
     .filter-group input:focus {
         outline: none;
-        border-color: var(--panchita-yellow);
+        border-color: var(--panchita-red);
     }
 
     .btn-filter {
-        background: var(--panchita-yellow);
-        color: var(--panchita-dark);
+        background: var(--panchita-red);
+        color: white;
         border: none;
         padding: 0.75rem 1.5rem;
         border-radius: 8px;
@@ -104,7 +104,7 @@
     }
 
     .btn-filter:hover {
-        background: #f4c430;
+        background: var(--panchita-red-dark);
         transform: translateY(-2px);
     }
 
@@ -183,7 +183,7 @@
 
     .venta-total {
         font-weight: 700;
-        color: var(--panchita-yellow);
+        color: var(--panchita-red);
         font-size: 1.1rem;
     }
 
@@ -355,7 +355,7 @@
             <div>
                 <a href="{% url 'admin:gestion_venta_change' venta.id %}" 
                    target="_blank" 
-                   style="color: var(--panchita-yellow); text-decoration: none;"
+                   style="color: var(--panchita-red); text-decoration: none;"
                    title="Ver detalles">
                     <i class="fas fa-eye"></i>
                 </a>
