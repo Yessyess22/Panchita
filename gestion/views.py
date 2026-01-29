@@ -314,17 +314,69 @@ def producto_editar(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
     
     if request.method == 'POST':
-        producto.nombre = request.POST.get('nombre')
-        producto.descripcion = request.POST.get('descripcion')
-        producto.costo = request.POST.get('costo')
-        producto.precio_venta = request.POST.get('precio_venta')
-        producto.descuento = request.POST.get('descuento') or 0
-        producto.stock = request.POST.get('stock') or 0
-        producto.categoria_id = request.POST.get('categoria_id')
+        nombre = request.POST.get('nombre', '').strip()
+        descripcion = request.POST.get('descripcion', '').strip()
+        costo_str = request.POST.get('costo', '0')
+        precio_venta_str = request.POST.get('precio_venta', '0')
+        descuento_str = request.POST.get('descuento', '0') or '0'
+        stock_str = request.POST.get('stock', '0') or '0'
+        categoria_id = request.POST.get('categoria_id')
+        nueva_imagen = request.FILES.get('imagen')
         
-        if request.FILES.get('imagen'):
-            producto.imagen = request.FILES.get('imagen')
-            
+        # Validaciones (mismas que en crear)
+        if not nombre:
+            messages.error(request, 'El nombre del producto es requerido.')
+            categorias = Categoria.objects.filter(activo=True)
+            return render(request, 'gestion/producto_form.html', {
+                'producto': producto,
+                'categorias': categorias,
+                'active': 'productos',
+                'form_data': request.POST,
+            })
+        if not categoria_id:
+            messages.error(request, 'Debe seleccionar una categoría.')
+            categorias = Categoria.objects.filter(activo=True)
+            return render(request, 'gestion/producto_form.html', {
+                'producto': producto,
+                'categorias': categorias,
+                'active': 'productos',
+                'form_data': request.POST,
+            })
+        try:
+            from decimal import Decimal, InvalidOperation
+            costo = Decimal(costo_str)
+            precio_venta = Decimal(precio_venta_str)
+            descuento = Decimal(descuento_str)
+            stock = int(stock_str)
+        except (ValueError, InvalidOperation):
+            messages.error(request, 'Error en los valores numéricos.')
+            categorias = Categoria.objects.filter(activo=True)
+            return render(request, 'gestion/producto_form.html', {
+                'producto': producto,
+                'categorias': categorias,
+                'active': 'productos',
+                'form_data': request.POST,
+            })
+        if costo < 0 or precio_venta <= 0 or descuento < 0 or descuento > 100 or stock < 0:
+            messages.error(request, 'Revise costo, precio, descuento y stock.')
+            categorias = Categoria.objects.filter(activo=True)
+            return render(request, 'gestion/producto_form.html', {
+                'producto': producto,
+                'categorias': categorias,
+                'active': 'productos',
+                'form_data': request.POST,
+            })
+        
+        # Actualizar producto
+        producto.nombre = nombre
+        producto.descripcion = descripcion if descripcion else None
+        producto.costo = costo
+        producto.precio_venta = precio_venta
+        producto.descuento = descuento
+        producto.stock = stock
+        producto.categoria_id = categoria_id
+        if nueva_imagen:
+            producto.imagen = nueva_imagen
         producto.save()
         
         messages.success(request, 'Producto actualizado exitosamente.')
