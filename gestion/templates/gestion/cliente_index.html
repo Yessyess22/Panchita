@@ -17,6 +17,7 @@
                     <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">CI / NIT</th>
                     <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">Teléfono</th>
                     <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">Email</th>
+                    <th style="padding: 1rem; text-align: center; border-bottom: 2px solid #dee2e6;">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -26,10 +27,20 @@
                     <td style="padding: 1rem;">{{ cliente.ci_nit|default:"—" }}</td>
                     <td style="padding: 1rem;">{{ cliente.telefono|default:"—" }}</td>
                     <td style="padding: 1rem;">{{ cliente.email|default:"—" }}</td>
+                    <td style="padding: 1rem; text-align: center;">
+                        <a href="{% url 'cliente_editar' cliente.pk %}" class="btn"
+                            style="background: #007bff; color: white; padding: 0.4rem 0.8rem; border-radius: 5px; text-decoration: none; margin-right: 0.5rem; font-size: 0.9rem;">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                        <a href="{% url 'cliente_eliminar' cliente.pk %}" class="btn"
+                            style="background: #dc3545; color: white; padding: 0.4rem 0.8rem; border-radius: 5px; text-decoration: none; font-size: 0.9rem;">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </a>
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="4" style="padding: 2rem; text-align: center; color: #6c757d;">
+                    <td colspan="5" style="padding: 2rem; text-align: center; color: #6c757d;">
                         No hay clientes registrados
                     </td>
                 </tr>

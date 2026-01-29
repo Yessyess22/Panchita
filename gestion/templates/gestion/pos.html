@@ -11,7 +11,7 @@
     <div class="order-panel">
         <div class="order-header">
             <h2><i class="fas fa-shopping-cart"></i> Pedido Actual</h2>
-            <span class="ticket-number">Ticket N°1</span>
+            <span class="ticket-number" id="ticketNumberDisplay">Ticket N°{{ siguiente_ticket }}</span>
         </div>
 
         <div class="order-items-header">
@@ -175,6 +175,26 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Venta Completada -->
+<div id="ventaCompletadaModal" class="payment-modal" style="display: none;">
+    <div class="modal-overlay" onclick="pos.closeVentaCompletadaModal()"></div>
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header" style="border-radius: 15px 15px 0 0;">
+            <h3><i class="fas fa-check-circle"></i> Venta Completada</h3>
+        </div>
+        <div class="modal-body" style="text-align: center; padding: 2rem;">
+            <div style="font-size: 4rem; color: #28a745; margin-bottom: 1rem;">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <p style="font-size: 1.2rem; margin-bottom: 0.5rem; color: #333;">Venta <strong id="ventaCompletadaId">#0</strong> registrada</p>
+            <p style="font-size: 1.5rem; font-weight: 700; color: #c41e3a; margin: 1rem 0;">Bs. <span id="ventaCompletadaTotal">0.00</span></p>
+            <button type="button" onclick="pos.closeVentaCompletadaModal()" class="btn-confirm" style="width: 100%; margin-top: 1rem;">
+                <i class="fas fa-thumbs-up"></i> Aceptar
+            </button>
         </div>
     </div>
 </div>
@@ -372,7 +392,8 @@
         procesarPagoUrl: "{% url 'pos_procesar_pago' %}",
         buscarClientesUrl: "{% url 'pos_buscar_clientes' %}",
         crearClienteUrl: "{% url 'pos_crear_cliente' %}",
-        csrfToken: "{{ csrf_token }}"
+        csrfToken: "{{ csrf_token }}",
+        siguienteTicket: {{ siguiente_ticket }}
     };
 </script>
 <script src="{% static 'gestion/js/pos.js' %}"></script>

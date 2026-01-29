@@ -163,16 +163,21 @@ def index(request):
 @login_required
 def pos_view(request):
     """Point of Sale interface"""
+    from django.db.models import Max
     productos = Producto.objects.select_related('categoria').filter(activo=True)
     categorias = Categoria.objects.filter(activo=True)
     clientes = Cliente.objects.filter(activo=True)
     metodos_pago = MetodoPago.objects.filter(activo=True)
-    
+    # Siguiente número de ticket = max(id) + 1 (consecutivo con las ventas)
+    ultimo_id = Venta.objects.aggregate(m=Max('id'))['m'] or 0
+    siguiente_ticket = ultimo_id + 1
+
     context = {
         'productos': productos,
         'categorias': categorias,
         'clientes': clientes,
         'metodos_pago': metodos_pago,
+        'siguiente_ticket': siguiente_ticket,
         'active': 'pos'
     }
     return render(request, 'gestion/pos.html', context)
@@ -184,6 +189,68 @@ def cliente_index(request):
     clientes = Cliente.objects.filter(activo=True).order_by('nombre_completo')
     context = {'clientes': clientes, 'active': 'clientes'}
     return render(request, 'gestion/cliente_index.html', context)
+
+
+@login_required
+def cliente_editar(request, pk):
+    """Editar datos de un cliente."""
+    cliente = get_object_or_404(Cliente, pk=pk)
+
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre', '').strip()
+        ci_nit = (request.POST.get('ci_nit') or '').strip() or None
+        telefono = (request.POST.get('telefono') or '').strip() or None
+        email = (request.POST.get('email') or '').strip() or None
+        direccion = (request.POST.get('direccion') or '').strip() or None
+
+        if not nombre:
+            messages.error(request, 'El nombre del cliente es obligatorio.')
+            return render(request, 'gestion/cliente_form.html', {
+                'cliente': cliente,
+                'active': 'clientes',
+                'form_data': request.POST,
+            })
+
+        if ci_nit and Cliente.objects.exclude(pk=pk).filter(ci_nit=ci_nit).exists():
+            messages.error(request, 'Ya existe otro cliente con ese CI/NIT.')
+            return render(request, 'gestion/cliente_form.html', {
+                'cliente': cliente,
+                'active': 'clientes',
+                'form_data': request.POST,
+            })
+
+        cliente.nombre_completo = nombre
+        cliente.ci_nit = ci_nit
+        cliente.telefono = telefono
+        cliente.email = email
+        cliente.direccion = direccion
+        cliente.save()
+
+        messages.success(request, f'Cliente "{cliente.nombre_completo}" actualizado correctamente.')
+        return redirect('cliente_index')
+
+    return render(request, 'gestion/cliente_form.html', {
+        'cliente': cliente,
+        'active': 'clientes',
+    })
+
+
+@login_required
+def cliente_eliminar(request, pk):
+    """Eliminar (desactivar) un cliente."""
+    cliente = get_object_or_404(Cliente, pk=pk)
+
+    if request.method == 'POST':
+        nombre = cliente.nombre_completo
+        cliente.activo = False
+        cliente.save()
+        messages.success(request, f'Cliente "{nombre}" eliminado correctamente.')
+        return redirect('cliente_index')
+
+    return render(request, 'gestion/cliente_eliminar.html', {
+        'cliente': cliente,
+        'active': 'clientes',
+    })
 
 
 @login_required
@@ -685,38 +752,46 @@ def venta_index(request):
     """Lista todas las ventas"""
     from django.db.models import Sum
     from datetime import datetime
-    
+
     # Filtros opcionales
     estado_filter = request.GET.get('estado', '')
     fecha_filter = request.GET.get('fecha', '')
-    
+    ticket_filter = request.GET.get('ticket', '').strip()
+
     # Query base
     ventas = Venta.objects.select_related('cliente', 'usuario').prefetch_related('detalles', 'pagos').order_by('-fecha')
-    
+
     # Aplicar filtros
     if estado_filter:
         ventas = ventas.filter(estado=estado_filter)
-    
+
     if fecha_filter:
         try:
             fecha = datetime.strptime(fecha_filter, '%Y-%m-%d').date()
             ventas = ventas.filter(fecha__date=fecha)
         except ValueError:
             pass
-    
+
+    if ticket_filter:
+        try:
+            ventas = ventas.filter(id=int(ticket_filter))
+        except ValueError:
+            pass
+
     # Estadísticas
     total_ventas = ventas.count()
     total_general = ventas.aggregate(total=Sum('total'))['total'] or 0
-    
+
     # Paginación simple (últimas 50 ventas por defecto)
     ventas = ventas[:50]
-    
+
     context = {
         'ventas': ventas,
         'total_ventas': total_ventas,
         'total_general': total_general,
         'estado_filter': estado_filter,
         'fecha_filter': fecha_filter,
+        'ticket_filter': ticket_filter,
         'active': 'ventas'
     }
     return render(request, 'gestion/venta_index.html', context)

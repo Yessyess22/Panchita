@@ -302,6 +302,10 @@
     <div class="filters-bar">
         <form method="get" style="display: flex; gap: 1rem; flex-wrap: wrap; width: 100%;">
             <div class="filter-group">
+                <label for="ticket">Buscar por Ticket</label>
+                <input type="number" name="ticket" id="ticket" placeholder="Ej: 8" min="1" value="{{ ticket_filter }}">
+            </div>
+            <div class="filter-group">
                 <label for="estado">Estado</label>
                 <select name="estado" id="estado">
                     <option value="">Todos los estados</option>
@@ -329,7 +333,7 @@
     <div class="ventas-table">
         {% if ventas %}
         <div class="table-header">
-            <div>ID</div>
+            <div>Ticket</div>
             <div>Cliente</div>
             <div>Vendedor</div>
             <div>Fecha</div>
@@ -339,7 +343,7 @@
         </div>
         {% for venta in ventas %}
         <div class="table-row">
-            <div class="venta-id">#{{ venta.id }}</div>
+            <div class="venta-id" title="N° de ticket">#{{ venta.id }}</div>
             <div class="venta-cliente">{{ venta.cliente.nombre_completo }}</div>
             <div class="venta-vendedor">{{ venta.usuario.username }}</div>
             <div class="venta-fecha">
@@ -366,7 +370,7 @@
         <div class="empty-state">
             <i class="fas fa-inbox"></i>
             <p>No se encontraron ventas</p>
-            {% if estado_filter or fecha_filter %}
+            {% if estado_filter or fecha_filter or ticket_filter %}
             <p style="font-size: 0.9rem; margin-top: 0.5rem;">Intenta cambiar los filtros</p>
             {% endif %}
         </div>

@@ -11,7 +11,7 @@ class POS {
         this.loadCart();
         this.attachEventListeners();
         this.renderCart();
-        this.updateTicketNumber();
+        this.updateTicketNumber(); // Usa siguiente_ticket del servidor (consecutivo con ventas)
     }
 
     attachEventListeners() {
@@ -251,6 +251,22 @@ class POS {
         }
     }
 
+    showVentaCompletadaModal(ventaId, total) {
+        const modal = document.getElementById('ventaCompletadaModal');
+        const idEl = document.getElementById('ventaCompletadaId');
+        const totalEl = document.getElementById('ventaCompletadaTotal');
+        if (modal && idEl && totalEl) {
+            idEl.textContent = '#' + ventaId;
+            totalEl.textContent = total || '0.00';
+            modal.style.display = 'block';
+        }
+    }
+
+    closeVentaCompletadaModal() {
+        const modal = document.getElementById('ventaCompletadaModal');
+        if (modal) modal.style.display = 'none';
+    }
+
     closePaymentModal() {
         const modal = document.getElementById('paymentModal');
         if (modal) {
@@ -403,12 +419,10 @@ class POS {
                 this.cart = [];
                 this.saveCart();
                 this.renderCart();
-                this.advanceTicketNumber();
+                this.setSiguienteTicket(data.venta_id + 1);
 
-                // Show success message
-                setTimeout(() => {
-                    alert(`Venta #${data.venta_id} completada\nTotal: Bs. ${data.total}`);
-                }, 300);
+                // Mostrar modal de confirmación en la página (en lugar del alert del navegador)
+                this.showVentaCompletadaModal(data.venta_id, data.total);
             } else {
                 alert('Error: ' + data.error);
             }
@@ -434,22 +448,14 @@ class POS {
     }
 
     updateTicketNumber() {
-        const ticketEl = document.querySelector('.ticket-number');
+        const ticketEl = document.querySelector('.ticket-number') || document.getElementById('ticketNumberDisplay');
         if (!ticketEl) return;
-        const key = 'posTicketNumber';
-        let ticketNum = sessionStorage.getItem(key);
-        if (ticketNum === null) {
-            ticketNum = String(Math.floor(Math.random() * 9000) + 1000);
-            sessionStorage.setItem(key, ticketNum);
-        }
-        ticketEl.textContent = `Ticket N°${ticketNum}`;
+        const num = window.posData && window.posData.siguienteTicket != null ? window.posData.siguienteTicket : 1;
+        ticketEl.textContent = `Ticket N°${num}`;
     }
 
-    advanceTicketNumber() {
-        const key = 'posTicketNumber';
-        let ticketNum = parseInt(sessionStorage.getItem(key) || '1000', 10);
-        ticketNum += 1;
-        sessionStorage.setItem(key, String(ticketNum));
+    setSiguienteTicket(num) {
+        if (window.posData) window.posData.siguienteTicket = num;
         this.updateTicketNumber();
     }
 
