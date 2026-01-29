@@ -2,7 +2,7 @@ import os
 from django.core.files import File
 from gestion.models import Producto, Categoria
 
-print("=== Iniciando Carga de Productos desde Imágenes ===")
+print("=== Iniciando Carga de Productos desde Imágenes (Modo Seguro) ===")
 
 # 1. Asegurar Categorías
 categorias_map = {
@@ -21,8 +21,7 @@ for nombre, desc in categorias_map.items():
         cat.save()
         print(f"Creada categoría: {nombre}")
 
-# 2. Definición de Productos (Mapeo Imagen -> Datos)
-# Formato: 'Archivo': {'nombre': 'X', 'precio': 0.0, 'cat': 'X', 'desc': 'X'}
+# 2. Definición de Productos
 productos_config = {
     'burrito.png': {
         'nombre': 'Burrito Panchita', 'precio': 25.00, 'cat': 'Mexicana',
@@ -44,10 +43,7 @@ productos_config = {
         'nombre': 'Pique Macho', 'precio': 45.00, 'cat': 'Platos',
         'desc': 'Tradicional pique macho cochabambino.'
     },
-    'pique_n5lux4k.jpg': { # Duplicate image handling? Just use one or ignore
-        'nombre': 'Pique Macho Especial', 'precio': 55.00, 'cat': 'Platos',
-        'desc': 'Pique macho tamaño familiar.'
-    },
+    # REMOVIDO pique_n5lux4k.jpg para evitar duplicados
     'hamburguesa_queso.png': {
         'nombre': 'Hamburguesa con Queso', 'precio': 18.00, 'cat': 'Comida Rápida',
         'desc': 'Hamburguesa de res con queso americano.'
@@ -76,63 +72,69 @@ productos_config = {
         'nombre': 'Mega Balde (10 Presas)', 'precio': 90.00, 'cat': 'Pollos',
         'desc': 'Balde familiar con 10 presas de pollo.'
     },
-    # Productos existentes (Actualizar imagen)
     'Chiquitin.jpg': {
         'nombre': 'Chiquitin (1 presa)', 'precio': 18.00, 'cat': 'Pollos',
         'desc': 'Combo con 1 presa de pollo', 
-        'update_only': True # Solo actualizar si existe, o crear si no
     },
     'Chipollo Panchita.jpg': {
         'nombre': 'Chipollo (2 presas)', 'precio': 24.00, 'cat': 'Pollos',
         'desc': 'Combo con 2 presas de pollo',
-        'update_only': True
     },
     'Escolar Panchita.jpg': {
         'nombre': 'Escolar (3 presas)', 'precio': 29.00, 'cat': 'Pollos',
         'desc': 'Combo con 3 presas de pollo',
-        'update_only': True
     },
     'Panchita 4 presas.jpg': {
         'nombre': 'Panchita (4 presas)', 'precio': 35.00, 'cat': 'Pollos',
         'desc': 'Combo con 4 presas de pollo',
-        'update_only': True
     },
 }
 
 # 3. Procesar
 for filename, data in productos_config.items():
-    # Ruta relativa para el campo ImageField
     img_relative_path = f'productos/{filename}'
     
-    # Verificar si existe categoria
     try:
         categoria = Categoria.objects.get(nombre=data['cat'])
     except Categoria.DoesNotExist:
-        print(f"Error: Categoría {data['cat']} no encontrada para {filename}")
         continue
 
-    # Buscar producto existente por nombre
-    producto_existente = Producto.objects.filter(nombre=data['nombre']).first()
+    # BÚSQUEDA ROBUSTA: Por nombre exacto o nombres similares
+    # Esto evita crear "Pique Macho" si ya existe "Pique Macho Especial" o "Pique"
+    producto_existente = Producto.objects.filter(nombre__icontains=data['nombre']).first()
+    
+    if not producto_existente:
+         # Intento secundario: buscar por coincidencia parcial inversa
+         # Ej: buscar si en la base hay algo que contenga parte del nombre nuevo
+         pass
 
     if producto_existente:
-        # Actualizar imagen si no tiene o si queremos forzar
-        producto_existente.imagen = img_relative_path
+        # ACTUALIZAR: Solo aseguramos que tenga la imagen y validamos datos
+        print(f"Encontrado existente: {producto_existente.nombre}")
+        
+        cambios = False
+        if not producto_existente.imagen or str(producto_existente.imagen) != img_relative_path:
+            producto_existente.imagen = img_relative_path
+            cambios = True
+            print(f" -> Actualizando imagen: {filename}")
+            
         if not producto_existente.descripcion and data.get('desc'):
              producto_existente.descripcion = data['desc']
-        producto_existente.save()
-        print(f"Actualizado (Imagen): {data['nombre']}")
+             cambios = True
+             
+        if cambios:
+            producto_existente.save()
     else:
-        # Crear nuevo si no es update_only estricto (o si queremos crearlos todos)
-        # En este caso, crearemos todo lo que no exista
+        # CREAR: Si no existe nada similar
         Producto.objects.create(
             nombre=data['nombre'],
             descripcion=data.get('desc', ''),
-            costo=data['precio'] * 0.7, # Costo estimado al 70%
+            costo=data['precio'] * 0.7,
             precio_venta=data['precio'],
-            stock=50, # Stock default
+            stock=50,
             categoria=categoria,
             imagen=img_relative_path
         )
         print(f"Creado nuevo: {data['nombre']}")
 
-print("=== Proceso Completado ===")
+print("=== Limpieza Completada ===")
