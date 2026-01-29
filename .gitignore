@@ -2,22 +2,25 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
 
 # Django
 *.log
 local_settings.py
 db.sqlite3
-media/
+db.sqlite3-journal
 staticfiles/
+# media/  → descomentado para subir imágenes de productos a GitHub
 
 # Environments
 .env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
 
 # Docker
 .docker_data/

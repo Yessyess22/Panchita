@@ -1,3 +1,4 @@
-Django>=5.0
-mysqlclient
+Django>=4.2,<5
+PyMySQL
 Pillow
+cryptography

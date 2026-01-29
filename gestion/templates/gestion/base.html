@@ -14,14 +14,18 @@
 <body>
     <nav>
         <ul>
-            <li><a href="{% url 'index' %}" class="{% if active == 'home' %}active{% endif %}"><i
-                        class="fas fa-drumstick-bite"></i> Pollos Panchita</a></li>
+            <li><a href="{% url 'index' %}" class="{% if active == 'home' %}active{% endif %}"><i class="fas fa-drumstick-bite"></i> Pollos Panchita</a></li>
             <li><a href="{% url 'index' %}" class="{% if active == 'home' %}active{% endif %}">Inicio</a></li>
             <li><a href="{% url 'pos' %}" class="{% if active == 'pos' %}active{% endif %}">Punto de Venta</a></li>
-            <li><a href="{% url 'producto_index' %}"
-                    class="{% if active == 'productos' %}active{% endif %}">Productos</a></li>
-            <li style="margin-left: auto;"><a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Salir</a>
+            <li><a href="{% url 'venta_index' %}" class="{% if active == 'ventas' %}active{% endif %}"><i class="fas fa-list-alt"></i> Ventas</a></li>
+            {% if user.is_staff %}
+            <li><a href="{% url 'producto_index' %}" class="{% if active == 'productos' %}active{% endif %}"><i class="fas fa-boxes"></i> Productos</a></li>
+            <li><a href="{% url 'admin:index' %}" target="_blank" title="Panel de administración"><i class="fas fa-cog"></i> Admin</a></li>
+            {% endif %}
+            <li style="margin-left: auto;" title="{% if user.is_staff %}Administrador{% else %}Cajero / Vendedor{% endif %}">
+                <span style="opacity: 0.9; font-size: 0.9rem;">{{ user.get_full_name|default:user.username }}</span>
             </li>
+            <li><a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Salir</a></li>
         </ul>
     </nav>
 
