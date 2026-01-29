@@ -14,7 +14,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f8d210 0%, #f4c430 50%, #e8b004 100%);
+            background: linear-gradient(135deg, #c41e3a 0%, #9a1830 40%, #e8b004 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -44,28 +44,28 @@
         }
 
         .login-header {
-            background: linear-gradient(135deg, #f8d210 0%, #e8b004 100%);
+            background: linear-gradient(135deg, #c41e3a 0%, #9a1830 100%);
             padding: 40px 30px;
             text-align: center;
-            color: #333;
+            border-bottom: 4px solid #f8d210;
         }
 
         .login-header i {
             font-size: 4rem;
             margin-bottom: 15px;
-            color: white;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            color: #f8d210;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .login-header h1 {
             font-size: 2rem;
             margin-bottom: 5px;
             color: white;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .login-header p {
-            color: rgba(255, 255, 255, 0.9);
+            color: rgba(255, 255, 255, 0.95);
             font-size: 0.95rem;
         }
 
@@ -109,15 +109,15 @@
         }
 
         .form-control:focus {
-            border-color: #f8d210;
-            box-shadow: 0 0 0 3px rgba(248, 210, 16, 0.1);
+            border-color: #c41e3a;
+            box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.15);
         }
 
         .btn-login {
             width: 100%;
             padding: 15px;
-            background: linear-gradient(135deg, #f8d210 0%, #e8b004 100%);
-            color: #333;
+            background: linear-gradient(135deg, #c41e3a 0%, #9a1830 100%);
+            color: white;
             border: none;
             border-radius: 10px;
             font-size: 1.1rem;
@@ -127,11 +127,13 @@
             margin-top: 10px;
             text-transform: uppercase;
             letter-spacing: 1px;
+            border: 2px solid #f8d210;
         }
 
         .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(248, 210, 16, 0.4);
+            box-shadow: 0 8px 20px rgba(196, 30, 58, 0.4);
+            background: linear-gradient(135deg, #9a1830 0%, #c41e3a 100%);
         }
 
         .btn-login:active {

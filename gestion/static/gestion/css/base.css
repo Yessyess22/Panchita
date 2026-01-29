@@ -1,7 +1,10 @@
-/* Panchita - Base Styles */
+/* Panchita - Base Styles (comida rápida: rojo + amarillo profesional) */
 :root {
+    --panchita-red: #c41e3a;
+    --panchita-red-dark: #9a1830;
+    --panchita-red-light: #e63946;
     --panchita-yellow: #f8d210;
-    --panchita-red: #dc3545;
+    --panchita-yellow-dark: #e8b004;
     --panchita-dark: #2c3e50;
     --panchita-light: #ecf0f1;
     --border-radius: 8px;
@@ -28,11 +31,12 @@ body {
     padding: 20px;
 }
 
-/* Navigation */
+/* Navigation - rojo principal con acento amarillo */
 nav {
-    background: linear-gradient(135deg, var(--panchita-yellow) 0%, #f4c430 100%);
+    background: linear-gradient(135deg, var(--panchita-red) 0%, var(--panchita-red-dark) 100%);
     padding: 1rem 2rem;
     box-shadow: var(--shadow);
+    border-bottom: 3px solid var(--panchita-yellow);
 }
 
 nav ul {
@@ -42,8 +46,12 @@ nav ul {
     align-items: center;
 }
 
+nav, nav li {
+    color: white;
+}
+
 nav a {
-    color: var(--panchita-dark);
+    color: white;
     text-decoration: none;
     font-weight: 600;
     padding: 0.5rem 1rem;
@@ -53,7 +61,8 @@ nav a {
 
 nav a:hover,
 nav a.active {
-    background: rgba(255, 255, 255, 0.3);
+    background: var(--panchita-yellow);
+    color: var(--panchita-dark);
     transform: translateY(-2px);
 }
 
@@ -71,12 +80,12 @@ nav a.active {
 }
 
 .btn-primary {
-    background: var(--panchita-yellow);
-    color: var(--panchita-dark);
+    background: var(--panchita-red);
+    color: white;
 }
 
 .btn-primary:hover {
-    background: #f4c430;
+    background: var(--panchita-red-dark);
     transform: translateY(-2px);
     box-shadow: var(--shadow-hover);
 }
@@ -93,12 +102,12 @@ nav a.active {
 }
 
 .btn-danger {
-    background: var(--panchita-red);
+    background: #b91c1c;
     color: white;
 }
 
 .btn-danger:hover {
-    background: #c82333;
+    background: #991b1b;
     transform: translateY(-2px);
     box-shadow: var(--shadow-hover);
 }
@@ -118,7 +127,7 @@ nav a.active {
     color: var(--panchita-dark);
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
-    border-bottom: 3px solid var(--panchita-yellow);
+    border-bottom: 3px solid var(--panchita-red);
 }
 
 /* Forms */
@@ -144,7 +153,8 @@ nav a.active {
 
 .form-control:focus {
     outline: none;
-    border-color: var(--panchita-yellow);
+    border-color: var(--panchita-red);
+    box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.15);
 }
 
 /* Tables */
@@ -191,7 +201,7 @@ nav a.active {
 .alert-danger {
     background: #f8d7da;
     color: #721c24;
-    border-left: 4px solid var(--panchita-red);
+    border-left: 4px solid #b91c1c;
 }
 
 .alert-info {

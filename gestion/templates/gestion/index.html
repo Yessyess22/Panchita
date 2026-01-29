@@ -25,28 +25,31 @@
         font-size: 1.1rem;
     }
 
-    /* Tarjeta destacada del total del día */
+    /* Tarjeta destacada del total del día - rojo + amarillo */
     .total-day-card {
-        background: linear-gradient(135deg, var(--panchita-yellow) 0%, #f4c430 100%);
+        background: linear-gradient(135deg, var(--panchita-red) 0%, var(--panchita-red-dark) 100%);
         border-radius: 15px;
         padding: 2rem;
         text-align: center;
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
         margin-bottom: 2rem;
-        color: var(--panchita-dark);
+        color: white;
+        border-bottom: 4px solid var(--panchita-yellow);
     }
 
     .total-day-card .label {
         font-size: 1.1rem;
         font-weight: 600;
         margin-bottom: 0.5rem;
-        opacity: 0.9;
+        opacity: 0.95;
+        color: rgba(255,255,255,0.95);
     }
 
     .total-day-card .amount {
         font-size: 3rem;
         font-weight: 700;
         margin: 0;
+        color: var(--panchita-yellow);
     }
 
     /* Estadísticas del día */
@@ -74,7 +77,7 @@
     .stat-card .icon {
         font-size: 2.5rem;
         margin-bottom: 1rem;
-        color: var(--panchita-yellow);
+        color: var(--panchita-red);
     }
 
     .stat-card .value {
@@ -102,7 +105,7 @@
 
     .quick-action-btn {
         background: white;
-        border: 3px solid var(--panchita-yellow);
+        border: 3px solid var(--panchita-red);
         border-radius: 15px;
         padding: 2rem;
         text-align: center;
@@ -118,21 +121,23 @@
     }
 
     .quick-action-btn:hover {
-        background: var(--panchita-yellow);
+        background: var(--panchita-red);
+        color: white;
         transform: translateY(-5px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-        color: var(--panchita-dark);
+        box-shadow: 0 8px 20px rgba(196, 30, 58, 0.3);
+        border-color: var(--panchita-red);
     }
 
     .quick-action-btn.primary {
-        background: linear-gradient(135deg, var(--panchita-yellow) 0%, #f4c430 100%);
+        background: linear-gradient(135deg, var(--panchita-red) 0%, var(--panchita-red-dark) 100%);
         border-color: var(--panchita-yellow);
-        color: var(--panchita-dark);
+        color: white;
         font-weight: 700;
     }
 
     .quick-action-btn.primary:hover {
-        background: linear-gradient(135deg, #f4c430 0%, var(--panchita-yellow) 100%);
+        background: linear-gradient(135deg, var(--panchita-red-dark) 0%, var(--panchita-red) 100%);
+        color: white;
         transform: scale(1.05);
     }
 
