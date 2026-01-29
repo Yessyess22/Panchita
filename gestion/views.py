@@ -117,10 +117,10 @@ def index(request):
     # Total pendiente (ventas pendientes)
     total_pendiente_hoy = ventas_hoy_pendientes.aggregate(total=Sum('total'))['total'] or Decimal('0.00')
     
-    # Productos vendidos hoy (suma de cantidades - solo completadas)
+    # Productos vendidos hoy: suma de cantidades de las ventas completadas del día
+    # (usamos las mismas ventas que ventas_hoy_completadas para consistencia con el resto del dashboard)
     productos_vendidos_hoy = DetalleVenta.objects.filter(
-        venta__fecha__date=hoy,
-        venta__estado='completado'
+        venta__in=ventas_hoy_completadas
     ).aggregate(total=Sum('cantidad'))['total'] or 0
     
     # Promedio por venta (solo completadas)
