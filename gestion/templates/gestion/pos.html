@@ -116,14 +116,44 @@
             </div>
 
             <form id="paymentForm">
-                <div class="form-group">
-                    <label for="cliente_select">Cliente *</label>
-                    <select id="cliente_select" name="cliente_id" required>
-                        <option value="">Seleccione un cliente</option>
-                        {% for cliente in clientes %}
-                        <option value="{{ cliente.id }}">{{ cliente.nombre_completo }}</option>
-                        {% endfor %}
-                    </select>
+                <div class="form-group cliente-group">
+                    <label>Cliente *</label>
+                    <div class="cliente-combo" style="display: flex; gap: 0.5rem; align-items: stretch;">
+                        <div class="cliente-search-wrap" style="flex: 1; position: relative;">
+                            <input type="text" id="cliente_search" class="form-control" placeholder="Buscar cliente por nombre, teléfono o CI..." 
+                                   autocomplete="off" style="width: 100%;">
+                            <input type="hidden" name="cliente_id" id="cliente_id_hidden" value="">
+                            <div id="cliente_dropdown" class="cliente-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 2px; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10;"></div>
+                        </div>
+                        <button type="button" id="btnNuevoCliente" class="btn-add-cliente" title="Crear cliente nuevo" style="width: 44px; min-width: 44px; padding: 0; background: #28a745; color: white; border: none; border-radius: 8px; font-size: 1.5rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;">+</button>
+                    </div>
+                    <div id="nuevoClienteForm" class="nuevo-cliente-form" style="display: none; margin-top: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+                        <div style="font-weight: 600; margin-bottom: 0.75rem; color: #333;">Datos del nuevo cliente</div>
+                        <div style="margin-bottom: 0.5rem;">
+                            <input type="text" id="nuevo_cliente_nombre" placeholder="Nombre completo *" maxlength="150" 
+                                   style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px;">
+                        </div>
+                        <div style="margin-bottom: 0.5rem;">
+                            <input type="text" id="nuevo_cliente_telefono" placeholder="Teléfono" maxlength="20" 
+                                   style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px;">
+                        </div>
+                        <div style="margin-bottom: 0.5rem;">
+                            <input type="text" id="nuevo_cliente_ci" placeholder="CI / NIT (opcional)" maxlength="20" 
+                                   style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px;">
+                        </div>
+                        <div style="margin-bottom: 0.75rem;">
+                            <input type="email" id="nuevo_cliente_email" placeholder="Email (opcional)" maxlength="254" 
+                                   style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px;">
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button type="button" id="btnGuardarCliente" class="btn-guardar-cliente" style="padding: 0.5rem 1rem; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                                <i class="fas fa-save"></i> Guardar cliente
+                            </button>
+                            <button type="button" id="btnCancelarCliente" style="padding: 0.5rem 1rem; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -309,6 +339,27 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(196, 30, 58, 0.4);
     }
+
+    .btn-add-cliente:hover {
+        background: #218838;
+        transform: scale(1.05);
+    }
+    .cliente-dropdown-item {
+        padding: 0.6rem 1rem;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+        font-size: 0.95rem;
+        transition: background 0.15s;
+    }
+    .cliente-dropdown-item:last-child { border-bottom: none; }
+    .cliente-dropdown-item:hover {
+        background: #f0f0f0;
+    }
+    .cliente-dropdown-empty {
+        padding: 0.75rem 1rem;
+        color: #666;
+        font-size: 0.9rem;
+    }
 </style>
 
 {% csrf_token %}
@@ -319,6 +370,8 @@
     // Pass data to JavaScript
     window.posData = {
         procesarPagoUrl: "{% url 'pos_procesar_pago' %}",
+        buscarClientesUrl: "{% url 'pos_buscar_clientes' %}",
+        crearClienteUrl: "{% url 'pos_crear_cliente' %}",
         csrfToken: "{{ csrf_token }}"
     };
 </script>

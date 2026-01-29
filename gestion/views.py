@@ -177,6 +177,15 @@ def pos_view(request):
     }
     return render(request, 'gestion/pos.html', context)
 
+
+@login_required
+def cliente_index(request):
+    """Lista de clientes del sistema."""
+    clientes = Cliente.objects.filter(activo=True).order_by('nombre_completo')
+    context = {'clientes': clientes, 'active': 'clientes'}
+    return render(request, 'gestion/cliente_index.html', context)
+
+
 @login_required
 @staff_required
 def producto_index(request):
@@ -604,6 +613,72 @@ def pos_procesar_pago(request):
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
     
     return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+
+
+@login_required
+def pos_buscar_clientes(request):
+    """API: buscar clientes por nombre, teléfono o CI (para POS)."""
+    from django.http import JsonResponse
+    from django.db.models import Q
+
+    q = (request.GET.get('q') or '').strip()
+    clientes_qs = Cliente.objects.filter(activo=True).order_by('nombre_completo')
+
+    if q:
+        clientes_qs = clientes_qs.filter(
+            Q(nombre_completo__icontains=q)
+            | Q(telefono__icontains=q)
+            | Q(ci_nit__icontains=q)
+            | Q(email__icontains=q)
+        )[:30]
+    else:
+        clientes_qs = clientes_qs[:100]
+
+    lista = [
+        {'id': c.id, 'nombre_completo': c.nombre_completo, 'telefono': c.telefono or '', 'ci_nit': c.ci_nit or ''}
+        for c in clientes_qs
+    ]
+    return JsonResponse({'clientes': lista})
+
+
+@login_required
+def pos_crear_cliente(request):
+    """API: crear cliente desde POS (JSON)."""
+    from django.http import JsonResponse
+    import json
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        nombre = (data.get('nombre_completo') or '').strip()
+        telefono = (data.get('telefono') or '').strip()
+        ci_nit = (data.get('ci_nit') or '').strip() or None
+        email = (data.get('email') or '').strip() or None
+
+        if not nombre:
+            return JsonResponse({'success': False, 'error': 'El nombre del cliente es obligatorio.'}, status=400)
+
+        if ci_nit and Cliente.objects.filter(ci_nit=ci_nit).exists():
+            return JsonResponse({'success': False, 'error': 'Ya existe un cliente con ese CI/NIT.'}, status=400)
+
+        cliente = Cliente.objects.create(
+            nombre_completo=nombre,
+            telefono=telefono or None,
+            ci_nit=ci_nit,
+            email=email,
+            activo=True,
+        )
+        return JsonResponse({
+            'success': True,
+            'cliente': {'id': cliente.id, 'nombre_completo': cliente.nombre_completo},
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Datos inválidos'}, status=400)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
 
 @login_required
 def venta_index(request):

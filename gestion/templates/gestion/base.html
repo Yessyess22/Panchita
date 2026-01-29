@@ -18,6 +18,7 @@
             <li><a href="{% url 'index' %}" class="{% if active == 'home' %}active{% endif %}">Inicio</a></li>
             <li><a href="{% url 'pos' %}" class="{% if active == 'pos' %}active{% endif %}">Punto de Venta</a></li>
             <li><a href="{% url 'venta_index' %}" class="{% if active == 'ventas' %}active{% endif %}"><i class="fas fa-list-alt"></i> Ventas</a></li>
+            <li><a href="{% url 'cliente_index' %}" class="{% if active == 'clientes' %}active{% endif %}"><i class="fas fa-users"></i> Clientes</a></li>
             {% if user.is_staff %}
             <li><a href="{% url 'producto_index' %}" class="{% if active == 'productos' %}active{% endif %}"><i class="fas fa-boxes"></i> Productos</a></li>
             <li><a href="{% url 'admin:index' %}" target="_blank" title="Panel de administración"><i class="fas fa-cog"></i> Admin</a></li>
