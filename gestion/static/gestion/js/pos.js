@@ -3,6 +3,7 @@ class POS {
     constructor() {
         this.cart = [];
         this.currentCategory = 'all';
+        this.clienteSearchTimeout = null;
         this.init();
     }
 
@@ -45,6 +46,43 @@ class POS {
         const payBtn = document.querySelector('.btn-pay');
         if (payBtn) {
             payBtn.addEventListener('click', () => this.processPayment());
+        }
+
+        // Un solo campo: buscar y elegir cliente (dropdown de resultados)
+        const clienteSearch = document.getElementById('cliente_search');
+        const clienteDropdown = document.getElementById('cliente_dropdown');
+        if (clienteSearch) {
+            clienteSearch.addEventListener('input', () => {
+                const hid = document.getElementById('cliente_id_hidden');
+                if (hid) hid.value = '';
+                clearTimeout(this.clienteSearchTimeout);
+                this.clienteSearchTimeout = setTimeout(() => {
+                    this.searchClientesDropdown(clienteSearch.value.trim());
+                }, 300);
+            });
+            clienteSearch.addEventListener('focus', () => {
+                if (clienteSearch.value.trim()) this.searchClientesDropdown(clienteSearch.value.trim());
+                else this.searchClientesDropdown('');
+            });
+        }
+        document.addEventListener('click', (e) => {
+            const wrap = document.querySelector('.cliente-search-wrap');
+            const dd = document.getElementById('cliente_dropdown');
+            if (dd && wrap && !wrap.contains(e.target) && !dd.contains(e.target)) this.hideClienteDropdown();
+        });
+
+        // Crear cliente nuevo - mostrar formulario
+        const btnNuevoCliente = document.getElementById('btnNuevoCliente');
+        if (btnNuevoCliente) {
+            btnNuevoCliente.addEventListener('click', () => this.toggleNuevoClienteForm(true));
+        }
+        const btnCancelarCliente = document.getElementById('btnCancelarCliente');
+        if (btnCancelarCliente) {
+            btnCancelarCliente.addEventListener('click', () => this.toggleNuevoClienteForm(false));
+        }
+        const btnGuardarCliente = document.getElementById('btnGuardarCliente');
+        if (btnGuardarCliente) {
+            btnGuardarCliente.addEventListener('click', () => this.saveNewCliente());
         }
     }
 
@@ -198,8 +236,13 @@ class POS {
         const modal = document.getElementById('paymentModal');
         if (modal) {
             modal.style.display = 'block';
+            this.toggleNuevoClienteForm(false);
+            const clienteSearch = document.getElementById('cliente_search');
+            const clienteIdHidden = document.getElementById('cliente_id_hidden');
+            if (clienteSearch) clienteSearch.value = '';
+            if (clienteIdHidden) clienteIdHidden.value = '';
+            this.hideClienteDropdown();
 
-            // Setup form submission
             const form = document.getElementById('paymentForm');
             form.onsubmit = (e) => {
                 e.preventDefault();
@@ -213,15 +256,121 @@ class POS {
         if (modal) {
             modal.style.display = 'none';
             document.getElementById('paymentForm').reset();
+            const clienteSearch = document.getElementById('cliente_search');
+            const clienteIdHidden = document.getElementById('cliente_id_hidden');
+            if (clienteSearch) clienteSearch.value = '';
+            if (clienteIdHidden) clienteIdHidden.value = '';
+            this.toggleNuevoClienteForm(false);
+            this.hideClienteDropdown();
+        }
+    }
+
+    hideClienteDropdown() {
+        const dd = document.getElementById('cliente_dropdown');
+        if (dd) dd.style.display = 'none';
+    }
+
+    async searchClientesDropdown(q) {
+        const dropdown = document.getElementById('cliente_dropdown');
+        if (!dropdown || !window.posData || !window.posData.buscarClientesUrl) return;
+        try {
+            const url = window.posData.buscarClientesUrl + (q ? '?q=' + encodeURIComponent(q) : '');
+            const response = await fetch(url);
+            const data = await response.json();
+            const clientes = data.clientes || [];
+            dropdown.innerHTML = '';
+            if (clientes.length === 0) {
+                dropdown.innerHTML = '<div class="cliente-dropdown-empty">No hay clientes. Use el botón + para crear uno.</div>';
+            } else {
+                clientes.forEach(c => {
+                    const item = document.createElement('div');
+                    item.className = 'cliente-dropdown-item';
+                    item.dataset.id = c.id;
+                    item.textContent = c.nombre_completo + (c.telefono ? ' — ' + c.telefono : '');
+                    item.addEventListener('click', () => {
+                        document.getElementById('cliente_id_hidden').value = c.id;
+                        document.getElementById('cliente_search').value = c.nombre_completo + (c.telefono ? ' — ' + c.telefono : '');
+                        this.hideClienteDropdown();
+                    });
+                    dropdown.appendChild(item);
+                });
+            }
+            dropdown.style.display = 'block';
+        } catch (err) {
+            console.error('Error buscando clientes:', err);
+            dropdown.innerHTML = '<div class="cliente-dropdown-empty">Error al buscar.</div>';
+            dropdown.style.display = 'block';
+        }
+    }
+
+    toggleNuevoClienteForm(show) {
+        const form = document.getElementById('nuevoClienteForm');
+        if (form) form.style.display = show ? 'block' : 'none';
+    }
+
+    async saveNewCliente() {
+        const nombre = (document.getElementById('nuevo_cliente_nombre') || {}).value.trim();
+        if (!nombre) {
+            alert('El nombre del cliente es obligatorio.');
+            return;
+        }
+
+        const telefono = (document.getElementById('nuevo_cliente_telefono') || {}).value.trim();
+        const ci = (document.getElementById('nuevo_cliente_ci') || {}).value.trim();
+        const email = (document.getElementById('nuevo_cliente_email') || {}).value.trim();
+
+        const btn = document.getElementById('btnGuardarCliente');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        }
+
+        try {
+            const response = await fetch(window.posData.crearClienteUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': window.posData.csrfToken
+                },
+                body: JSON.stringify({
+                    nombre_completo: nombre,
+                    telefono: telefono || '',
+                    ci_nit: ci || '',
+                    email: email || ''
+                })
+            });
+            const data = await response.json();
+
+            if (data.success && data.cliente) {
+                document.getElementById('cliente_id_hidden').value = data.cliente.id;
+                document.getElementById('cliente_search').value = data.cliente.nombre_completo;
+                this.toggleNuevoClienteForm(false);
+                this.hideClienteDropdown();
+                document.getElementById('nuevo_cliente_nombre').value = '';
+                document.getElementById('nuevo_cliente_telefono').value = '';
+                document.getElementById('nuevo_cliente_ci').value = '';
+                document.getElementById('nuevo_cliente_email').value = '';
+                this.showNotification('Cliente creado correctamente');
+            } else {
+                alert('Error: ' + (data.error || 'No se pudo crear el cliente'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Error al crear el cliente. Intente de nuevo.');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Guardar cliente';
+            }
         }
     }
 
     async submitPayment() {
-        const clienteId = document.getElementById('cliente_select').value;
+        const clienteId = document.getElementById('cliente_id_hidden').value;
         const metodoPagoId = document.getElementById('metodo_pago_select').value;
 
         if (!clienteId || !metodoPagoId) {
-            alert('Por favor complete todos los campos');
+            alert('Por favor busque y seleccione un cliente, o cree uno con el botón +');
             return;
         }
 
@@ -250,10 +399,11 @@ class POS {
                 this.showNotification('✓ Venta procesada exitosamente');
                 this.closePaymentModal();
 
-                // Clear cart
+                // Clear cart and advance ticket number for next order
                 this.cart = [];
                 this.saveCart();
                 this.renderCart();
+                this.advanceTicketNumber();
 
                 // Show success message
                 setTimeout(() => {
@@ -285,10 +435,22 @@ class POS {
 
     updateTicketNumber() {
         const ticketEl = document.querySelector('.ticket-number');
-        if (ticketEl) {
-            const ticketNum = Math.floor(Math.random() * 1000) + 1;
-            ticketEl.textContent = `Ticket N°${ticketNum}`;
+        if (!ticketEl) return;
+        const key = 'posTicketNumber';
+        let ticketNum = sessionStorage.getItem(key);
+        if (ticketNum === null) {
+            ticketNum = String(Math.floor(Math.random() * 9000) + 1000);
+            sessionStorage.setItem(key, ticketNum);
         }
+        ticketEl.textContent = `Ticket N°${ticketNum}`;
+    }
+
+    advanceTicketNumber() {
+        const key = 'posTicketNumber';
+        let ticketNum = parseInt(sessionStorage.getItem(key) || '1000', 10);
+        ticketNum += 1;
+        sessionStorage.setItem(key, String(ticketNum));
+        this.updateTicketNumber();
     }
 
     getCsrfToken() {
