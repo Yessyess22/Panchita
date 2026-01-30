@@ -1,4 +1,10 @@
 import os
+import django
+
+# Inicializar Django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'panchita_project.settings')
+django.setup()
+
 from django.core.files import File
 from gestion.models import Producto, Categoria
 
@@ -52,11 +58,11 @@ productos_config = {
         'nombre': 'Hot Dog', 'precio': 12.00, 'cat': 'Comida Rápida',
         'desc': 'Salchicha viena con salsas a elección.'
     },
-    'ChichaMorada Panchita.jpg': {
+    'ChichaMorada_Refresco_Panchita.jpg': {
         'nombre': 'Chicha Morada', 'precio': 10.00, 'cat': 'Bebidas',
         'desc': 'Refresco natural de maíz morado.'
     },
-    'Limonada Panchita.jpg': {
+    'Limonada_Refresco_Panchita.jpg': {
         'nombre': 'Limonada', 'precio': 8.00, 'cat': 'Bebidas',
         'desc': 'Limonada fresca y natural.'
     },
@@ -64,9 +70,9 @@ productos_config = {
         'nombre': 'Pollo al Spiedo (Entero)', 'precio': 60.00, 'cat': 'Pollos',
         'desc': 'Pollo entero al spiedo con papas.'
     },
-    'Tostada Panchita.jpg': {
-        'nombre': 'Tostada de Pollo', 'precio': 15.00, 'cat': 'Platos',
-        'desc': 'Tostada crujiente con pollo desmenuzado.'
+    'Tostada_Refresco_Panchita.jpg': {
+        'nombre': 'Refresco de Tostada', 'precio': 8.00, 'cat': 'Bebidas',
+        'desc': 'Refresco tradicional de cebada tostada.'
     },
     'MegaBalde 10 Presas.jpg': {
         'nombre': 'Mega Balde (10 Presas)', 'precio': 90.00, 'cat': 'Pollos',
