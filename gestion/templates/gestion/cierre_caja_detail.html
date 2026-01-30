@@ -1,0 +1,122 @@
+{% extends 'gestion/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .cierre-detail-container { max-width: 700px; margin: 0 auto; padding: 2rem; }
+    .cierre-detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+    .cierre-detail-header h1 { color: var(--panchita-dark); font-size: 1.75rem; margin: 0; }
+    .cierre-detail-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem 2rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+    .cierre-detail-card h3 {
+        color: var(--panchita-dark);
+        font-size: 1rem;
+        margin: 0 0 1rem 0;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--panchita-red);
+    }
+    .detail-row { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #eee; }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-row .label { color: #666; }
+    .detail-row .value { font-weight: 600; color: #333; }
+    .observaciones-box {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+        white-space: pre-wrap;
+        color: #333;
+    }
+    .items-table { width: 100%; border-collapse: collapse; }
+    .items-table th, .items-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee; }
+    .items-table th { background: #f8f9fa; font-weight: 600; color: var(--panchita-dark); }
+    .items-table .text-right { text-align: right; }
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 1.2rem;
+        background: var(--panchita-red);
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    .btn-back:hover { background: var(--panchita-red-dark); color: white; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cierre-detail-container">
+    <div class="cierre-detail-header">
+        <h1><i class="fas fa-cash-register"></i> Cierre #{{ cierre.id }}</h1>
+        <a href="{% url 'cierre_caja_index' %}" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Volver a Cierres
+        </a>
+    </div>
+
+    <div class="cierre-detail-card">
+        <h3>Información general</h3>
+        <div class="detail-row">
+            <span class="label">Fecha y hora</span>
+            <span class="value">{{ cierre.fecha_cierre|date:"d/m/Y H:i" }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="label">Usuario</span>
+            <span class="value">{{ cierre.usuario.get_full_name|default:cierre.usuario.username }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="label">Total ventas</span>
+            <span class="value"><strong>Bs. {{ cierre.total_ventas|floatformat:2 }}</strong></span>
+        </div>
+        <div class="detail-row">
+            <span class="label">Fondo inicial</span>
+            <span class="value">{% if cierre.fondo_inicial %}Bs. {{ cierre.fondo_inicial|floatformat:2 }}{% else %}-{% endif %}</span>
+        </div>
+        <div class="detail-row">
+            <span class="label">Fondo final</span>
+            <span class="value">{% if cierre.fondo_final %}Bs. {{ cierre.fondo_final|floatformat:2 }}{% else %}-{% endif %}</span>
+        </div>
+    </div>
+
+    {% if cierre.detalles_pago.exists %}
+    <div class="cierre-detail-card">
+        <h3>Por método de pago</h3>
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>Método</th>
+                    <th class="text-right">Monto</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for detalle in cierre.detalles_pago.all %}
+                <tr>
+                    <td>{{ detalle.metodo_pago.nombre }}</td>
+                    <td class="text-right">Bs. {{ detalle.monto|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if cierre.notas %}
+    <div class="cierre-detail-card">
+        <h3><i class="fas fa-sticky-note"></i> Observaciones</h3>
+        <div class="observaciones-box">{{ cierre.notas }}</div>
+    </div>
+    {% else %}
+    <div class="cierre-detail-card">
+        <h3><i class="fas fa-sticky-note"></i> Observaciones</h3>
+        <p style="color: #999; margin: 0;">Sin observaciones registradas.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

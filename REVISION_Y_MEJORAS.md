@@ -15,7 +15,7 @@ La app es un **punto de venta (POS) para local** de comida rápida de pollos. No
 | **Punto de Venta (POS)** | ✅ | Carrito, categorías, búsqueda, pago con cliente y método de pago |
 | **Productos** | ✅ | Listar, crear, editar, eliminar (soft delete) |
 | **Ventas** | ✅ | Listado con filtros por estado y fecha |
-| **Clientes** | ⚠️ | Solo en admin y en select del POS; no hay pantalla de gestión |
+| **Clientes** | ✅ | CRUD en app; búsqueda y creación rápida en POS |
 | **Categorías** | ⚠️ | Solo en admin |
 | **Métodos de pago** | ⚠️ | Solo en admin |
 | **Promociones** | ⚠️ | Modelo existe pero no se usa en POS |
@@ -133,10 +133,10 @@ La app es un **punto de venta (POS) para local** de comida rápida de pollos. No
 
 - [x] **Roles:** Restringir vistas por rol (admin vs cajero) y ocultar menú según rol.
 - [x] **Menú:** Añadir enlace “Ventas” / “Historial” en `base.html`.
-- [ ] **Cliente mostrador:** Cliente por defecto y opción “Venta mostrador” en POS.
-- [ ] **Detalle de venta:** Vista `venta_detail` (solo lectura) y enlace desde lista de ventas.
+- [x] **Cliente mostrador:** Cliente por defecto y opción “Venta mostrador” en POS.
+- [x] **Detalle de venta:** Vista `venta_detail` (solo lectura) y enlace desde lista de ventas.
 - [ ] **Cierre de caja:** Pantalla con totales del día y registro de cierre (opcional).
-- [ ] **Clientes en la app:** CRUD de clientes (para admin o también cajero si quieres que registre clientes).
+- [x] **Clientes en la app:** CRUD de clientes (para admin o también cajero si quieres que registre clientes).
 - [ ] **Categorías en la app:** CRUD de categorías solo para admin.
 - [ ] **Reportes:** Ventas por período, productos más vendidos, por método de pago.
 - [ ] **Stock bajo:** Alerta en dashboard o en productos.

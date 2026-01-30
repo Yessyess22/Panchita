@@ -1,5 +1,6 @@
 {% extends 'gestion/base.html' %}
 {% load static %}
+{% load gestion_extras %}
 
 {% block extra_css %}
 <style>
@@ -125,6 +126,24 @@
         background: #5a6268;
     }
 
+    .btn-cerrar-turno-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--panchita-yellow);
+        color: var(--panchita-dark);
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    .btn-cerrar-turno-link:hover {
+        background: #f4c430;
+        color: var(--panchita-dark);
+        transform: translateY(-2px);
+    }
+
     .ventas-table {
         background: white;
         border-radius: 12px;
@@ -137,7 +156,7 @@
         color: white;
         padding: 1rem 1.5rem;
         display: grid;
-        grid-template-columns: 80px 2fr 1.5fr 1fr 1fr 1fr 100px;
+        grid-template-columns: 80px 2fr 1.5fr 1fr 70px 1fr 1fr 100px;
         gap: 1rem;
         font-weight: 600;
         font-size: 0.9rem;
@@ -145,7 +164,7 @@
 
     .table-row {
         display: grid;
-        grid-template-columns: 80px 2fr 1.5fr 1fr 1fr 1fr 100px;
+        grid-template-columns: 80px 2fr 1.5fr 1fr 70px 1fr 1fr 100px;
         gap: 1rem;
         padding: 1rem 1.5rem;
         border-bottom: 1px solid #eee;
@@ -226,12 +245,13 @@
     @media (max-width: 1024px) {
         .table-header,
         .table-row {
-            grid-template-columns: 60px 1.5fr 1fr 1fr 80px;
+            grid-template-columns: 60px 1.5fr 1fr 1fr 100px;
             font-size: 0.85rem;
         }
 
         .venta-vendedor,
-        .venta-fecha {
+        .venta-fecha,
+        .venta-modo {
             display: none;
         }
     }
@@ -281,9 +301,14 @@
 <div class="ventas-container">
     <div class="ventas-header">
         <h1><i class="fas fa-list-alt"></i> Historial de Ventas</h1>
-        <a href="{% url 'index' %}" class="btn-clear">
-            <i class="fas fa-arrow-left"></i> Volver al Inicio
-        </a>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="{% url 'cierre_caja_index' %}" class="btn-cerrar-turno-link" title="Cerrar turno y registrar caja">
+                <i class="fas fa-lock"></i> Cerrar Turno
+            </a>
+            <a href="{% url 'index' %}" class="btn-clear">
+                <i class="fas fa-arrow-left"></i> Volver al Inicio
+            </a>
+        </div>
     </div>
 
     <!-- Resumen de estadísticas -->
@@ -335,8 +360,9 @@
         <div class="table-header">
             <div>Ticket</div>
             <div>Cliente</div>
-            <div>Vendedor</div>
-            <div>Fecha</div>
+            <div class="venta-vendedor">Vendedor</div>
+            <div class="venta-fecha">Fecha</div>
+            <div class="venta-modo" title="Modo">Modo</div>
             <div>Total</div>
             <div>Estado</div>
             <div>Acciones</div>
@@ -350,6 +376,9 @@
                 {{ venta.fecha|date:"d/m/Y" }}<br>
                 <small>{{ venta.fecha|date:"H:i" }}</small>
             </div>
+            <div class="venta-modo" title="{% if venta|modo_consumo_safe == 'llevar' %}Para llevar{% else %}En el local{% endif %}">
+                {% if venta|modo_consumo_safe == 'llevar' %}<i class="fas fa-shopping-bag" style="color: var(--panchita-red);"></i>{% else %}<i class="fas fa-utensils" style="color: var(--panchita-red);"></i>{% endif %}
+            </div>
             <div class="venta-total">Bs. {{ venta.total|floatformat:2 }}</div>
             <div>
                 <span class="estado-badge estado-{{ venta.estado }}">
@@ -357,10 +386,9 @@
                 </span>
             </div>
             <div>
-                <a href="{% url 'admin:gestion_venta_change' venta.id %}" 
-                   target="_blank" 
+                <a href="{% url 'venta_detail' venta.id %}" 
                    style="color: var(--panchita-red); text-decoration: none;"
-                   title="Ver detalles">
+                   title="Ver detalles del ticket">
                     <i class="fas fa-eye"></i>
                 </a>
             </div>

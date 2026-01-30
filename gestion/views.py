@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from .decorators import staff_required
 from .models import (
     Producto, Categoria, Cliente, Venta, DetalleVenta,
-    MetodoPago, Promocion, Pago
+    MetodoPago, Promocion, Pago, CierreCaja, CierreCajaDetallePago
 )
 
 def _ensure_default_user(username, password, email, is_staff, is_superuser=False):
@@ -86,11 +86,12 @@ def logout_view(request):
 def index(request):
     from django.utils import timezone
     from django.db.models import Sum, Count, Q
+    from django.db import OperationalError
     from decimal import Decimal
     from datetime import datetime, timedelta
     
-    # Fecha de hoy en la zona horaria del servidor
-    ahora = timezone.now()
+    # Fecha de hoy en zona horaria de Bolivia (America/La_Paz)
+    ahora = timezone.localtime(timezone.now())
     hoy = ahora.date()
     
     # Estadísticas del día - TODAS las ventas del día (completadas y pendientes)
@@ -136,8 +137,25 @@ def index(request):
     total_productos = Producto.objects.filter(activo=True).count()
     total_clientes = Cliente.objects.filter(activo=True).count()
     
+    # Productos con stock bajo (< 5) para alerta
+    productos_bajo_stock = list(Producto.objects.filter(activo=True, stock__lt=5).order_by('stock')[:10])
+    
     # Total de ventas en general (sin filtro de fecha)
     total_ventas_general = Venta.objects.count()
+    
+    # Forzar evaluación de querysets que se iteran en el template (detectar errores de BD)
+    try:
+        _ = list(ultimas_ventas_hoy)
+        _ = list(todas_las_ventas)
+    except OperationalError as e:
+        err_msg = str(e).lower()
+        if any(x in err_msg for x in ('modo_consumo', 'no such column', 'does not exist', "doesn't exist")):
+            messages.error(
+                request,
+                'La base de datos necesita actualizarse. Ejecute: python manage.py migrate (o ./migrar.sh)'
+            )
+            return redirect('login')
+        raise
     
     context = {
         # Estadísticas del día
@@ -152,6 +170,7 @@ def index(request):
         # Estadísticas generales
         'total_productos': total_productos,
         'total_clientes': total_clientes,
+        'productos_bajo_stock': productos_bajo_stock,
         'total_ventas_general': total_ventas_general,
         'hoy': hoy,
         'ahora': ahora,
@@ -159,6 +178,40 @@ def index(request):
         'active': 'home'
     }
     return render(request, 'gestion/index.html', context)
+
+def _get_cliente_mostrador():
+    """Obtiene o crea el cliente Mostrador para ventas rápidas."""
+    cliente, _ = Cliente.objects.get_or_create(
+        ci_nit='MOSTRADOR',
+        defaults={
+            'nombre_completo': 'Mostrador',
+            'telefono': '',
+            'email': '',
+            'activo': True
+        }
+    )
+    return cliente
+
+
+def _precio_con_promocion(producto):
+    """Obtiene el precio final del producto aplicando promociones vigentes si existen."""
+    from django.utils import timezone
+    from decimal import Decimal, ROUND_HALF_UP
+    ahora = timezone.now()
+    promos_vigentes = Promocion.objects.filter(
+        activo=True,
+        productos=producto,
+        fecha_inicio__lte=ahora,
+        fecha_fin__gte=ahora
+    ).order_by('-descuento_porcentaje')
+    if promos_vigentes.exists():
+        promo = promos_vigentes.first()
+        precio_base = producto.precio_final()
+        desc = promo.descuento_porcentaje / Decimal('100')
+        precio_promo = precio_base * (1 - desc)
+        return precio_promo.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return producto.precio_final()
+
 
 @login_required
 def pos_view(request):
@@ -168,15 +221,23 @@ def pos_view(request):
     categorias = Categoria.objects.filter(activo=True)
     clientes = Cliente.objects.filter(activo=True)
     metodos_pago = MetodoPago.objects.filter(activo=True)
+    cliente_mostrador = _get_cliente_mostrador()
+    # Precios con promociones aplicadas
+    productos_con_precio = []
+    for p in productos:
+        precio = _precio_con_promocion(p)
+        tiene_promo = precio < p.precio_final()
+        productos_con_precio.append({'producto': p, 'precio_display': precio, 'tiene_promo': tiene_promo})
     # Siguiente número de ticket = max(id) + 1 (consecutivo con las ventas)
     ultimo_id = Venta.objects.aggregate(m=Max('id'))['m'] or 0
     siguiente_ticket = ultimo_id + 1
 
     context = {
-        'productos': productos,
+        'productos_con_precio': productos_con_precio,
         'categorias': categorias,
         'clientes': clientes,
         'metodos_pago': metodos_pago,
+        'cliente_mostrador': cliente_mostrador,
         'siguiente_ticket': siguiente_ticket,
         'active': 'pos'
     }
@@ -256,8 +317,14 @@ def cliente_eliminar(request, pk):
 @login_required
 @staff_required
 def producto_index(request):
+    from django.db.models import Q
     productos = Producto.objects.select_related('categoria').filter(activo=True)
-    context = {'productos': productos, 'active': 'productos'}
+    q = request.GET.get('q', '').strip()
+    if q:
+        productos = productos.filter(
+            Q(nombre__icontains=q) | Q(categoria__nombre__icontains=q) | Q(descripcion__icontains=q)
+        )
+    context = {'productos': productos, 'q': q, 'active': 'productos'}
     return render(request, 'gestion/producto_index.html', context)
 
 @login_required
@@ -485,105 +552,6 @@ def producto_eliminar(request, pk):
 
 
 @login_required
-@staff_required
-def venta_crear(request):
-    if request.method == 'POST':
-        cliente_id = request.POST.get('cliente_id')
-        items_ids = request.POST.getlist('productos[]')
-        items_cantidades = request.POST.getlist('cantidades[]')
-        metodo_pago_id = request.POST.get('metodo_pago_id')
-        
-        cliente = get_object_or_404(Cliente, id=cliente_id)
-        
-        # Get or create a default user for sales if not logged in
-        from django.contrib.auth.models import User
-        if request.user.is_authenticated:
-            usuario = request.user
-        else:
-            usuario, created = User.objects.get_or_create(username='vendedor', defaults={'email': 'vendedor@panchita.com'})
-            if created:
-                usuario.set_password('vendedor123')
-                usuario.save()
-        
-        # Create sale with explicit timezone-aware datetime
-        from django.utils import timezone
-        venta = Venta.objects.create(cliente=cliente, usuario=usuario)
-        # Asegurar que la fecha se guarde correctamente
-        if not venta.fecha:
-            venta.fecha = timezone.now()
-            venta.save()
-        
-        # Add sale details
-        for prod_id, cant in zip(items_ids, items_cantidades):
-            if prod_id and cant:
-                try:
-                    producto = Producto.objects.get(id=prod_id, activo=True)
-                except Producto.DoesNotExist:
-                    messages.error(request, f'Producto con ID {prod_id} no encontrado o inactivo.')
-                    venta.delete()
-                    return redirect('pos')
-                
-                try:
-                    cantidad = int(cant)
-                    if cantidad <= 0:
-                        raise ValueError('Cantidad debe ser mayor a 0')
-                except (ValueError, TypeError):
-                    messages.error(request, 'Cantidad inválida.')
-                    venta.delete()
-                    return redirect('pos')
-                
-                # Check stock
-                if not producto.tiene_stock(cantidad):
-                    messages.error(request, f'Stock insuficiente para {producto.nombre}.')
-                    venta.delete()
-                    return redirect('pos')
-                
-                precio_unitario = producto.precio_final()
-                descuento_porcentaje = producto.descuento
-                
-                DetalleVenta.objects.create(
-                    venta=venta,
-                    producto=producto,
-                    cantidad=cantidad,
-                    precio_unitario=precio_unitario,
-                    descuento_porcentaje=descuento_porcentaje
-                )
-                
-                # Update stock
-                producto.stock -= cantidad
-                producto.save()
-        
-        # Calculate totals
-        venta.calcular_totales()
-        
-        # Create payment if method provided
-        if metodo_pago_id:
-            metodo_pago = get_object_or_404(MetodoPago, id=metodo_pago_id)
-            pago = Pago.objects.create(
-                venta=venta,
-                metodo_pago=metodo_pago,
-                monto=venta.total
-            )
-            
-            # Auto-validate if method doesn't require validation
-            if not metodo_pago.requiere_validacion:
-                pago.validar_pago(usuario)
-        
-        messages.success(request, 'Venta registrada exitosamente.')
-        return redirect('index')
-
-    clientes = Cliente.objects.filter(activo=True)
-    productos = Producto.objects.filter(activo=True)
-    metodos_pago = MetodoPago.objects.filter(activo=True)
-    
-    return render(request, 'gestion/venta_form.html', {
-        'clientes': clientes, 
-        'productos': productos,
-        'metodos_pago': metodos_pago,
-        'active': 'ventas'
-    })
-
-@login_required
 def pos_procesar_pago(request):
     """Process payment from POS"""
     from django.http import JsonResponse
@@ -601,10 +569,17 @@ def pos_procesar_pago(request):
             
             cliente = get_object_or_404(Cliente, id=cliente_id)
             metodo_pago = get_object_or_404(MetodoPago, id=metodo_pago_id)
+            modo_consumo = data.get('modo_consumo', 'local')
+            if modo_consumo not in ('local', 'llevar'):
+                modo_consumo = 'local'
             
             # Create sale with explicit timezone-aware datetime
             from django.utils import timezone
-            venta = Venta.objects.create(cliente=cliente, usuario=request.user)
+            venta = Venta.objects.create(
+                cliente=cliente,
+                usuario=request.user,
+                modo_consumo=modo_consumo
+            )
             # Asegurar que la fecha se guarde correctamente
             if not venta.fecha:
                 venta.fecha = timezone.now()
@@ -640,8 +615,17 @@ def pos_procesar_pago(request):
                         'error': f'Stock insuficiente para {producto.nombre}'
                     }, status=400)
                 
-                precio_unitario = producto.precio_final()
-                descuento_porcentaje = producto.descuento
+                # Usar precio del frontend (incluye promociones) o precio base
+                from decimal import Decimal, InvalidOperation
+                try:
+                    precio_unitario = Decimal(str(item.get('price', producto.precio_final())))
+                except (InvalidOperation, TypeError):
+                    precio_unitario = producto.precio_final()
+                # Validar: precio debe ser > 0 y <= precio base (promos bajan el precio)
+                precio_max = producto.precio_final()
+                if precio_unitario <= 0 or precio_unitario > precio_max:
+                    precio_unitario = precio_max
+                descuento_porcentaje = Decimal('0')  # El descuento ya está en el precio
                 
                 DetalleVenta.objects.create(
                     venta=venta,
@@ -751,6 +735,7 @@ def pos_crear_cliente(request):
 def venta_index(request):
     """Lista todas las ventas"""
     from django.db.models import Sum
+    from django.db import OperationalError
     from datetime import datetime
 
     # Filtros opcionales
@@ -783,7 +768,17 @@ def venta_index(request):
     total_general = ventas.aggregate(total=Sum('total'))['total'] or 0
 
     # Paginación simple (últimas 50 ventas por defecto)
-    ventas = ventas[:50]
+    try:
+        ventas = list(ventas[:50])
+    except OperationalError as e:
+        err_msg = str(e).lower()
+        if any(x in err_msg for x in ('modo_consumo', 'no such column', 'does not exist', "doesn't exist")):
+            messages.error(
+                request,
+                'La base de datos necesita actualizarse. Ejecute: python manage.py migrate (o ./migrar.sh)'
+            )
+            return redirect('index')
+        raise
 
     context = {
         'ventas': ventas,
@@ -795,3 +790,255 @@ def venta_index(request):
         'active': 'ventas'
     }
     return render(request, 'gestion/venta_index.html', context)
+
+
+@login_required
+def venta_detail(request, pk):
+    """Detalle de una venta (solo lectura)."""
+    from django.db import OperationalError
+    try:
+        venta = get_object_or_404(
+            Venta.objects.select_related('cliente', 'usuario').prefetch_related('detalles__producto', 'pagos__metodo_pago'),
+            pk=pk
+        )
+    except OperationalError as e:
+        err_msg = str(e).lower()
+        if any(x in err_msg for x in ('modo_consumo', 'no such column', 'does not exist', "doesn't exist")):
+            messages.error(
+                request,
+                'La base de datos necesita actualizarse. Ejecute: python manage.py migrate (o ./migrar.sh)'
+            )
+            return redirect('venta_index')
+        raise
+    return render(request, 'gestion/venta_detail.html', {
+        'venta': venta,
+        'active': 'ventas'
+    })
+
+
+@login_required
+def pago_validar(request, venta_pk, pago_pk):
+    """Confirma/valida un pago pendiente desde el detalle de la venta."""
+    if request.method != 'POST':
+        return redirect('venta_detail', pk=venta_pk)
+    venta = get_object_or_404(Venta, pk=venta_pk)
+    pago = get_object_or_404(Pago, pk=pago_pk, venta=venta)
+    if pago.validado:
+        messages.info(request, 'Este pago ya estaba validado.')
+    else:
+        pago.validar_pago(request.user)
+        messages.success(request, f'Pago de Bs. {pago.monto:.2f} ({pago.metodo_pago.nombre}) confirmado.')
+    return redirect('venta_detail', pk=venta_pk)
+
+
+# --- Cierre de Caja ---
+
+@login_required
+def cierre_caja_index(request):
+    """Cierre de caja: resumen del día y cierres de hoy."""
+    from django.db.models import Sum
+    from django.utils import timezone
+    from decimal import Decimal
+
+    try:
+        # Fecha de hoy en zona horaria de Bolivia (America/La_Paz)
+        hoy = timezone.localtime(timezone.now()).date()
+    except Exception:
+        from datetime import date
+        hoy = date.today()
+
+    from datetime import timedelta
+    hace_30_dias = hoy - timedelta(days=30)
+
+    try:
+        # Historial: últimos 30 días (o últimos 100 cierres)
+        cierres_qs = CierreCaja.objects.filter(
+            fecha_cierre__date__gte=hace_30_dias
+        ).select_related('usuario').prefetch_related('detalles_pago__metodo_pago').order_by('-fecha_cierre')
+        if not request.user.is_staff:
+            cierres_qs = cierres_qs.filter(usuario=request.user)
+        cierres = list(cierres_qs[:100])
+    except Exception as e:
+        err_msg = str(e).lower()
+        if any(x in err_msg for x in ('no such table', 'does not exist', "doesn't exist", 'table')):
+            messages.error(
+                request,
+                'Las tablas de Cierre de Caja no existen. Ejecute: python manage.py migrate'
+            )
+            return redirect('index')
+        raise
+    ventas_hoy = Venta.objects.filter(fecha__date=hoy, estado='completado')
+    if not request.user.is_staff:
+        ventas_hoy = ventas_hoy.filter(usuario=request.user)
+    total_hoy = ventas_hoy.aggregate(t=Sum('total'))['t'] or Decimal('0.00')
+    num_ventas_hoy = ventas_hoy.count()
+
+    return render(request, 'gestion/cierre_caja_index.html', {
+        'cierres': cierres,
+        'total_hoy': total_hoy,
+        'num_ventas_hoy': num_ventas_hoy,
+        'hoy': hoy,
+        'active': 'cierre_caja'
+    })
+
+
+@login_required
+def cierre_caja_nuevo(request):
+    """Pantalla para cerrar caja: muestra totales del día y permite registrar el cierre."""
+    from django.utils import timezone
+    from django.db.models import Sum
+    from django.db import OperationalError
+    from decimal import Decimal
+
+    try:
+        # Fecha de hoy en zona horaria de Bolivia (America/La_Paz)
+        hoy = timezone.localtime(timezone.now()).date()
+    except Exception:
+        from datetime import date
+        hoy = date.today()
+
+    # Ventas completadas del día del usuario actual (o todas si admin)
+    ventas_hoy = Venta.objects.filter(fecha__date=hoy, estado='completado')
+    if not request.user.is_staff:
+        ventas_hoy = ventas_hoy.filter(usuario=request.user)
+
+    total_ventas = ventas_hoy.aggregate(t=Sum('total'))['t'] or Decimal('0.00')
+    num_ventas = ventas_hoy.count()
+
+    # Totales por método de pago (evitar venta__in=[] en algunos backends)
+    metodos_pago = MetodoPago.objects.filter(activo=True)
+    totales_por_metodo = {}
+    if num_ventas > 0:
+        for p in Pago.objects.filter(venta__in=ventas_hoy, validado=True).values('metodo_pago__nombre').annotate(
+            total=Sum('monto')
+        ):
+            totales_por_metodo[p['metodo_pago__nombre']] = p['total']
+    
+    if request.method == 'POST':
+        fondo_inicial_str = (request.POST.get('fondo_inicial') or '').strip()
+        fondo_final_str = (request.POST.get('fondo_final') or '').strip()
+        notas = (request.POST.get('notas') or '').strip()
+        
+        try:
+            fondo_inicial = Decimal(fondo_inicial_str) if fondo_inicial_str else None
+            fondo_final = Decimal(fondo_final_str) if fondo_final_str else None
+        except Exception:
+            fondo_inicial = None
+            fondo_final = None
+        
+        try:
+            cierre = CierreCaja.objects.create(
+                usuario=request.user,
+                total_ventas=total_ventas,
+                fondo_inicial=fondo_inicial,
+                fondo_final=fondo_final,
+                notas=notas or None
+            )
+            
+            for metodo in metodos_pago:
+                monto = totales_por_metodo.get(metodo.nombre, Decimal('0'))
+                if monto > 0:
+                    CierreCajaDetallePago.objects.create(
+                        cierre=cierre,
+                        metodo_pago=metodo,
+                        monto=monto
+                    )
+            
+            messages.success(request, f'Cierre de caja registrado. Total: Bs. {total_ventas:.2f}')
+            return redirect('cierre_caja_index')
+        except OperationalError as e:
+            err_msg = str(e).lower()
+            if any(x in err_msg for x in ('no such table', 'does not exist', "doesn't exist", 'table')):
+                messages.error(
+                    request,
+                    'Las tablas de Cierre de Caja no existen. Ejecute: python manage.py migrate'
+                )
+                return redirect('cierre_caja_index')
+            raise
+    
+    return render(request, 'gestion/cierre_caja_nuevo.html', {
+        'total_ventas': total_ventas,
+        'num_ventas': num_ventas,
+        'hoy': hoy,
+        'totales_por_metodo': totales_por_metodo,
+        'metodos_pago': metodos_pago,
+        'active': 'cierre_caja'
+    })
+
+
+@login_required
+def cierre_caja_detail(request, pk):
+    """Detalle de un cierre de caja: observaciones, totales por método de pago."""
+    cierre = get_object_or_404(
+        CierreCaja.objects.select_related('usuario').prefetch_related('detalles_pago__metodo_pago'),
+        pk=pk
+    )
+    if not request.user.is_staff and cierre.usuario != request.user:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden('No tiene permiso para ver este cierre.')
+    return render(request, 'gestion/cierre_caja_detail.html', {
+        'cierre': cierre,
+        'active': 'cierre_caja'
+    })
+
+
+# --- Reportes (solo admin) ---
+
+@login_required
+@staff_required
+def reportes_index(request):
+    """Reportes: ventas por período, productos más vendidos, total por método de pago."""
+    from django.db.models import Sum, Count
+    from django.utils import timezone
+    from datetime import datetime, timedelta
+    from decimal import Decimal
+    
+    hoy = timezone.localtime(timezone.now()).date()
+    fecha_inicio = request.GET.get('fecha_inicio', (hoy - timedelta(days=30)).strftime('%Y-%m-%d'))
+    fecha_fin = request.GET.get('fecha_fin', hoy.strftime('%Y-%m-%d'))
+    
+    try:
+        fi = datetime.strptime(fecha_inicio, '%Y-%m-%d').date()
+        ff = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
+    except ValueError:
+        fi = hoy - timedelta(days=30)
+        ff = hoy
+    
+    if fi > ff:
+        fi, ff = ff, fi
+    
+    ventas_periodo = Venta.objects.filter(
+        fecha__date__gte=fi,
+        fecha__date__lte=ff,
+        estado='completado'
+    )
+    
+    # Total ventas período
+    total_periodo = ventas_periodo.aggregate(t=Sum('total'))['t'] or Decimal('0.00')
+    num_ventas_periodo = ventas_periodo.count()
+    
+    # Productos más vendidos
+    productos_mas_vendidos = DetalleVenta.objects.filter(
+        venta__in=ventas_periodo
+    ).values('producto__nombre').annotate(
+        cantidad=Sum('cantidad'),
+        total=Sum('subtotal')
+    ).order_by('-cantidad')[:20]
+    
+    # Total por método de pago
+    pagos_periodo = Pago.objects.filter(
+        venta__in=ventas_periodo,
+        validado=True
+    ).values('metodo_pago__nombre').annotate(
+        total=Sum('monto')
+    ).order_by('-total')
+    
+    return render(request, 'gestion/reportes_index.html', {
+        'fecha_inicio': fi.strftime('%Y-%m-%d'),
+        'fecha_fin': ff.strftime('%Y-%m-%d'),
+        'total_periodo': total_periodo,
+        'num_ventas_periodo': num_ventas_periodo,
+        'productos_mas_vendidos': productos_mas_vendidos,
+        'pagos_periodo': pagos_periodo,
+        'active': 'reportes'
+    })

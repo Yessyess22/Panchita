@@ -84,6 +84,16 @@ class POS {
         if (btnGuardarCliente) {
             btnGuardarCliente.addEventListener('click', () => this.saveNewCliente());
         }
+        // Venta Mostrador: pre-selecciona cliente para ventas rápidas
+        const btnVentaMostrador = document.getElementById('btnVentaMostrador');
+        if (btnVentaMostrador && window.posData && window.posData.clienteMostradorId) {
+            btnVentaMostrador.addEventListener('click', () => {
+                document.getElementById('cliente_id_hidden').value = window.posData.clienteMostradorId;
+                document.getElementById('cliente_search').value = 'Mostrador';
+                this.hideClienteDropdown();
+                this.toggleNuevoClienteForm(false);
+            });
+        }
     }
 
     addToCart(productId, productName, productPrice) {
@@ -395,6 +405,9 @@ class POS {
         confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
         confirmBtn.disabled = true;
 
+        const modoConsumoEl = document.querySelector('input[name="modo_consumo"]:checked');
+        const modoConsumo = modoConsumoEl ? modoConsumoEl.value : 'local';
+
         try {
             const response = await fetch(window.posData.procesarPagoUrl, {
                 method: 'POST',
@@ -405,6 +418,7 @@ class POS {
                 body: JSON.stringify({
                     cliente_id: clienteId,
                     metodo_pago_id: metodoPagoId,
+                    modo_consumo: modoConsumo,
                     items: this.cart
                 })
             });

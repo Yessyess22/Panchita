@@ -62,17 +62,28 @@ WSGI_APPLICATION = 'panchita_project.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
+#
+# Para usar SQLite (sin MySQL/Docker): export DJANGO_USE_SQLITE=1
+# Útil para desarrollo local cuando MySQL no está disponible.
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('DB_NAME', 'panchita_db'),
-        'USER': os.environ.get('DB_USER', 'panchita_user'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'panchita_pass'),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),  # Cambiado de 'db' a 'localhost'
-        'PORT': os.environ.get('DB_PORT', '3309'),  # Puerto 3309 para el contenedor Docker
+if os.environ.get('DJANGO_USE_SQLITE', '').lower() in ('1', 'true', 'yes'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.environ.get('DB_NAME', 'panchita_db'),
+            'USER': os.environ.get('DB_USER', 'panchita_user'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', 'panchita_pass'),
+            'HOST': os.environ.get('DB_HOST', 'localhost'),
+            'PORT': os.environ.get('DB_PORT', '3309'),
+        }
+    }
 
 
 # Password validation

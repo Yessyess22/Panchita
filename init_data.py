@@ -153,4 +153,17 @@ cliente, created = Cliente.objects.get_or_create(
 if created:
     print(f"✓ Cliente creado: {cliente.nombre_completo}")
 
+# Cliente Mostrador: para ventas rápidas sin buscar cliente
+mostrador, created = Cliente.objects.get_or_create(
+    ci_nit='MOSTRADOR',
+    defaults={
+        'nombre_completo': 'Mostrador',
+        'telefono': '',
+        'email': '',
+        'activo': True
+    }
+)
+if created:
+    print(f"✓ Cliente Mostrador creado (ventas rápidas)")
+
 print("\n✅ Datos iniciales creados exitosamente!")

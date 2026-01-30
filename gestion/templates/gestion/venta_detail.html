@@ -1,0 +1,228 @@
+{% extends 'gestion/base.html' %}
+{% load static %}
+{% load gestion_extras %}
+
+{% block extra_css %}
+<style>
+    .venta-detail-container {
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    .venta-detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .venta-detail-header h1 {
+        color: var(--panchita-dark);
+        font-size: 1.75rem;
+        margin: 0;
+    }
+    .venta-detail-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem 2rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+    .venta-detail-card h3 {
+        color: var(--panchita-dark);
+        font-size: 1rem;
+        margin: 0 0 1rem 0;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--panchita-red);
+    }
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #eee;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-row .label { color: #666; }
+    .detail-row .value { font-weight: 600; color: #333; }
+    .estado-badge {
+        display: inline-block;
+        padding: 0.3rem 0.6rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .estado-completado { background: #d4edda; color: #155724; }
+    .estado-pendiente { background: #fff3cd; color: #856404; }
+    .estado-cancelado { background: #f8d7da; color: #721c24; }
+    .items-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .items-table th, .items-table td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+    .items-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: var(--panchita-dark);
+    }
+    .items-table .text-right { text-align: right; }
+    .total-row {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--panchita-red);
+        background: #fff5f6;
+    }
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 1.2rem;
+        background: var(--panchita-red);
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    .btn-back:hover {
+        background: var(--panchita-red-dark);
+        color: white;
+    }
+    .btn-confirmar-pago {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.4rem 0.8rem;
+        background: #28a745;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        border: none;
+        cursor: pointer;
+    }
+    .btn-confirmar-pago:hover {
+        background: #218838;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="venta-detail-container">
+    <div class="venta-detail-header">
+        <h1><i class="fas fa-receipt"></i> Ticket #{{ venta.id }}</h1>
+        <a href="{% url 'venta_index' %}" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Volver a Ventas
+        </a>
+    </div>
+
+    <div class="venta-detail-card">
+        <h3>Información general</h3>
+        <div class="detail-row">
+            <span class="label">Fecha y hora</span>
+            <span class="value">{{ venta.fecha|date:"d/m/Y H:i" }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="label">Cliente</span>
+            <span class="value">{{ venta.cliente.nombre_completo }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="label">Vendedor</span>
+            <span class="value">{{ venta.usuario.get_full_name|default:venta.usuario.username }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="label">Modo</span>
+            <span class="value">
+                {% if venta|modo_consumo_safe == 'llevar' %}
+                <i class="fas fa-shopping-bag" style="color: var(--panchita-red);"></i> Para llevar
+                {% else %}
+                <i class="fas fa-utensils" style="color: var(--panchita-red);"></i> En el local
+                {% endif %}
+            </span>
+        </div>
+        <div class="detail-row">
+            <span class="label">Estado</span>
+            <span><span class="estado-badge estado-{{ venta.estado }}">{{ venta.get_estado_display }}</span></span>
+        </div>
+    </div>
+
+    <div class="venta-detail-card">
+        <h3>Productos</h3>
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th class="text-right">Cant.</th>
+                    <th class="text-right">Precio unit.</th>
+                    <th class="text-right">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for detalle in venta.detalles.all %}
+                <tr>
+                    <td>{{ detalle.producto.nombre }}</td>
+                    <td class="text-right">{{ detalle.cantidad }}</td>
+                    <td class="text-right">Bs. {{ detalle.precio_unitario|floatformat:2 }}</td>
+                    <td class="text-right">Bs. {{ detalle.subtotal|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+                <tr class="total-row">
+                    <td colspan="3" class="text-right">Total</td>
+                    <td class="text-right">Bs. {{ venta.total|floatformat:2 }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    {% if venta.pagos.exists %}
+    <div class="venta-detail-card">
+        <h3>Pagos</h3>
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>Método</th>
+                    <th class="text-right">Monto</th>
+                    <th>Estado</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pago in venta.pagos.all %}
+                <tr>
+                    <td>{{ pago.metodo_pago.nombre }}</td>
+                    <td class="text-right">Bs. {{ pago.monto|floatformat:2 }}</td>
+                    <td>
+                        {% if pago.validado %}
+                        <span style="color: #28a745;">✓ Validado</span>
+                        {% if pago.validado_por %}<br><small style="color: #666;">por {{ pago.validado_por.username }}</small>{% endif %}
+                        {% else %}
+                        <span style="color: #856404;">Pendiente</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if not pago.validado %}
+                        <form method="post" action="{% url 'pago_validar' venta.pk pago.pk %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-confirmar-pago" title="Confirmar que el pago fue recibido">
+                                <i class="fas fa-check"></i> Confirmar pago
+                            </button>
+                        </form>
+                        {% else %}
+                        —
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

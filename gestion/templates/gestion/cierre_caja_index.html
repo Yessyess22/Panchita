@@ -1,0 +1,125 @@
+{% extends 'gestion/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .cierre-container { max-width: 1000px; margin: 0 auto; padding: 2rem; position: relative; z-index: 1; }
+    .cierre-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+    .cierre-header h1 { color: var(--panchita-dark); font-size: 2rem; margin: 0; }
+    .btn-nuevo, .btn-cerrar-turno {
+        background: var(--panchita-yellow);
+        color: var(--panchita-dark);
+        padding: 0.85rem 1.75rem;
+        border-radius: 10px;
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-flex !important;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+        cursor: pointer;
+        pointer-events: auto;
+        border: 2px solid var(--panchita-dark);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        position: relative;
+        z-index: 2;
+    }
+    .btn-nuevo:hover, .btn-cerrar-turno:hover {
+        background: #fff;
+        color: var(--panchita-red);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+    }
+    /* Botón dentro de la tarjeta roja - más visible */
+    .resumen-dia-card .btn-cerrar-turno {
+        margin-top: 1rem;
+        background: white;
+        color: var(--panchita-red);
+        border-color: white;
+        font-size: 1.05rem;
+    }
+    .resumen-dia-card .btn-cerrar-turno:hover {
+        background: var(--panchita-yellow);
+        color: var(--panchita-dark);
+        border-color: var(--panchita-dark);
+    }
+    .cierre-table { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .table-header { background: var(--panchita-dark); color: white; padding: 1rem; display: grid; grid-template-columns: 80px 1.5fr 1fr 1fr 1fr 1fr 60px; gap: 1rem; font-weight: 600; font-size: 0.9rem; }
+    .table-row { display: grid; grid-template-columns: 80px 1.5fr 1fr 1fr 1fr 1fr 60px; gap: 1rem; padding: 1rem; border-bottom: 1px solid #eee; align-items: center; }
+    .btn-ver { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 8px; background: var(--panchita-red); color: white; text-decoration: none; transition: all 0.2s; }
+    .btn-ver:hover { background: var(--panchita-red-dark); color: white; transform: scale(1.05); }
+    .table-row:last-child { border-bottom: none; }
+    .empty-state { text-align: center; padding: 3rem; color: #999; }
+    .empty-state a { pointer-events: auto; cursor: pointer; }
+    .resumen-dia-card {
+        background: linear-gradient(135deg, var(--panchita-red) 0%, var(--panchita-red-dark) 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        text-align: center;
+        border-bottom: 4px solid var(--panchita-yellow);
+    }
+    .resumen-dia-label { font-size: 1rem; opacity: 0.95; margin-bottom: 0.5rem; }
+    .resumen-dia-total { font-size: 2.5rem; font-weight: 700; color: var(--panchita-yellow); margin: 0.5rem 0; }
+    .resumen-dia-ventas { font-size: 0.95rem; opacity: 0.9; margin-bottom: 1.5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cierre-container">
+    <div class="cierre-header">
+        <h1><i class="fas fa-cash-register"></i> Cierre de Caja</h1>
+    </div>
+
+    <!-- Resumen del día - visible siempre -->
+    <div class="resumen-dia-card">
+        <div class="resumen-dia-label">Resumen del día ({{ hoy|date:"d/m/Y" }})</div>
+        <div class="resumen-dia-total">Bs. {{ total_hoy|floatformat:2 }}</div>
+        <div class="resumen-dia-ventas">{{ num_ventas_hoy }} venta{{ num_ventas_hoy|pluralize:"s" }} del día</div>
+        <a href="{% url 'cierre_caja_nuevo' %}" class="btn-cerrar-turno" title="Registrar cierre del turno">
+            <i class="fas fa-lock"></i> Cerrar turno y registrar caja
+        </a>
+    </div>
+
+    <h3 style="margin: 2rem 0 1rem 0; color: var(--panchita-dark);"><i class="fas fa-history"></i> Historial de cierres (últimos 30 días)</h3>
+
+    <div class="cierre-table">
+        {% if cierres %}
+        <div class="table-header">
+            <div>#</div>
+            <div>Usuario</div>
+            <div>Fecha</div>
+            <div>Total Ventas</div>
+            <div>Fondo Inicial</div>
+            <div>Fondo Final</div>
+            <div title="Ver detalle"><i class="fas fa-eye"></i></div>
+        </div>
+        {% for cierre in cierres %}
+        <div class="table-row">
+            <div>{{ cierre.id }}</div>
+            <div>{{ cierre.usuario.username }}</div>
+            <div>
+                {{ cierre.fecha_cierre|date:"d/m/Y H:i" }}
+                {% if cierre.notas %}<i class="fas fa-sticky-note" style="margin-left: 0.35rem; color: var(--panchita-red);" title="Tiene observaciones"></i>{% endif %}
+            </div>
+            <div><strong>Bs. {{ cierre.total_ventas|floatformat:2 }}</strong></div>
+            <div>{% if cierre.fondo_inicial %}Bs. {{ cierre.fondo_inicial|floatformat:2 }}{% else %}-{% endif %}</div>
+            <div>{% if cierre.fondo_final %}Bs. {{ cierre.fondo_final|floatformat:2 }}{% else %}-{% endif %}</div>
+            <div>
+                <a href="{% url 'cierre_caja_detail' cierre.pk %}" class="btn-ver" title="Ver detalle y observaciones">
+                    <i class="fas fa-eye"></i>
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-inbox" style="font-size: 3rem; opacity: 0.3;"></i>
+            <p>No hay cierres de caja en el historial</p>
+            <a href="{% url 'cierre_caja_nuevo' %}" class="btn-nuevo" style="margin-top: 1rem;">Cerrar Caja Ahora</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

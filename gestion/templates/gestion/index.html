@@ -288,6 +288,19 @@
         {% endif %}
     </div>
 
+    <!-- Alerta de stock bajo -->
+    {% if productos_bajo_stock %}
+    <div class="stock-alert" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border-radius: 12px; padding: 1rem 1.5rem; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3); border-left: 5px solid #ff6b6b;">
+        <strong><i class="fas fa-exclamation-triangle"></i> Stock bajo</strong>
+        <span style="margin-left: 0.5rem;">Los siguientes productos tienen menos de 5 unidades:</span>
+        <ul style="margin: 0.5rem 0 0 1.5rem; padding: 0;">
+            {% for p in productos_bajo_stock %}
+            <li><a href="{% url 'producto_editar' p.pk %}" style="color: white; text-decoration: underline;">{{ p.nombre }}</a>: {{ p.stock }} unidad{{ p.stock|pluralize:"es" }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
     <!-- Tarjeta destacada del total del día -->
     <div class="total-day-card">
         <div class="label">Total Recaudado Hoy</div>
@@ -354,6 +367,12 @@
             <div class="icon"><i class="fas fa-list-alt"></i></div>
             <div class="title">Ver Todas las Ventas</div>
             <div class="description">Historial completo de ventas</div>
+        </a>
+
+        <a href="{% url 'cierre_caja_nuevo' %}" class="quick-action-btn primary">
+            <div class="icon"><i class="fas fa-lock"></i></div>
+            <div class="title">Cerrar Turno</div>
+            <div class="description">Registrar cierre de caja al final del turno</div>
         </a>
     </div>
 

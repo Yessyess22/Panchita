@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     Categoria, Producto, Cliente, Venta, DetalleVenta,
-    MetodoPago, Promocion, Pago
+    MetodoPago, Promocion, Pago, CierreCaja, CierreCajaDetallePago
 )
 
 @admin.register(Categoria)
@@ -58,8 +58,8 @@ class PagoInline(admin.TabularInline):
 
 @admin.register(Venta)
 class VentaAdmin(admin.ModelAdmin):
-    list_display = ('id', 'cliente', 'usuario', 'fecha', 'subtotal', 'descuento_total', 'total', 'estado', 'tiene_pago_completo')
-    list_filter = ('estado', 'fecha')
+    list_display = ('id', 'cliente', 'usuario', 'modo_consumo', 'fecha', 'subtotal', 'descuento_total', 'total', 'estado', 'tiene_pago_completo')
+    list_filter = ('estado', 'modo_consumo', 'fecha')
     search_fields = ('cliente__nombre_completo', 'usuario__username')
     readonly_fields = ('fecha', 'subtotal', 'descuento_total', 'total')
     inlines = [DetalleVentaInline, PagoInline]
@@ -68,6 +68,21 @@ class VentaAdmin(admin.ModelAdmin):
         return obj.tiene_pago_completo()
     tiene_pago_completo.boolean = True
     tiene_pago_completo.short_description = 'Pago Completo'
+
+class CierreCajaDetallePagoInline(admin.TabularInline):
+    model = CierreCajaDetallePago
+    extra = 0
+    readonly_fields = ('metodo_pago', 'monto')
+
+
+@admin.register(CierreCaja)
+class CierreCajaAdmin(admin.ModelAdmin):
+    list_display = ('id', 'usuario', 'fecha_cierre', 'total_ventas', 'fondo_inicial', 'fondo_final')
+    list_filter = ('usuario', 'fecha_cierre')
+    search_fields = ('usuario__username', 'notas')
+    readonly_fields = ('fecha_cierre',)
+    inlines = [CierreCajaDetallePagoInline]
+
 
 @admin.register(Pago)
 class PagoAdmin(admin.ModelAdmin):

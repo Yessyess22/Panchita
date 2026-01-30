@@ -10,6 +10,7 @@
     --border-radius: 8px;
     --shadow: 0 2px 8px rgba(0,0,0,0.1);
     --shadow-hover: 0 4px 12px rgba(0,0,0,0.15);
+    --sidebar-width: 240px;
 }
 
 * {
@@ -23,6 +24,8 @@ body {
     background-color: #f5f5f5;
     color: #333;
     line-height: 1.6;
+    display: flex;
+    min-height: 100vh;
 }
 
 .container {
@@ -31,39 +34,162 @@ body {
     padding: 20px;
 }
 
-/* Navigation - rojo principal con acento amarillo */
-nav {
-    background: linear-gradient(135deg, var(--panchita-red) 0%, var(--panchita-red-dark) 100%);
-    padding: 1rem 2rem;
-    box-shadow: var(--shadow);
-    border-bottom: 3px solid var(--panchita-yellow);
-}
-
-nav ul {
-    list-style: none;
-    display: flex;
-    gap: 2rem;
-    align-items: center;
-}
-
-nav, nav li {
+/* Sidebar */
+.sidebar {
+    width: var(--sidebar-width);
+    min-width: var(--sidebar-width);
+    background: linear-gradient(180deg, var(--panchita-red) 0%, var(--panchita-red-dark) 100%);
     color: white;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+    border-right: 3px solid var(--panchita-yellow);
+    z-index: 1000;
 }
 
-nav a {
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.5rem 1.25rem;
     color: white;
     text-decoration: none;
-    font-weight: 600;
-    padding: 0.5rem 1rem;
-    border-radius: var(--border-radius);
-    transition: all 0.3s ease;
+    font-weight: 700;
+    font-size: 1.1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
 }
 
-nav a:hover,
-nav a.active {
+.sidebar-brand i {
+    font-size: 1.75rem;
+    color: var(--panchita-yellow);
+}
+
+.sidebar-brand:hover {
+    color: white;
+}
+
+.sidebar-nav {
+    flex: 1;
+    padding: 1rem 0;
+    overflow-y: auto;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1.25rem;
+    color: rgba(255,255,255,0.9);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-link i {
+    width: 1.25rem;
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.sidebar-link:hover {
+    background: rgba(255,255,255,0.1);
+    color: white;
+    border-left-color: var(--panchita-yellow);
+}
+
+.sidebar-link.active {
     background: var(--panchita-yellow);
     color: var(--panchita-dark);
-    transform: translateY(-2px);
+    font-weight: 600;
+    border-left-color: var(--panchita-dark);
+}
+
+.sidebar-link.active:hover {
+    background: #f4c430;
+    color: var(--panchita-dark);
+}
+
+.sidebar-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.2);
+    margin: 0.5rem 1rem;
+}
+
+.sidebar-footer {
+    padding: 1rem 0;
+    border-top: 1px solid rgba(255,255,255,0.2);
+}
+
+.sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
+    opacity: 0.95;
+}
+
+.sidebar-user i {
+    font-size: 1.25rem;
+    color: var(--panchita-yellow);
+}
+
+.sidebar-logout {
+    color: rgba(255,255,255,0.85);
+}
+
+.sidebar-logout:hover {
+    background: rgba(196, 30, 58, 0.5);
+    color: white;
+}
+
+/* Main content area */
+.main-content {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+    padding: 1.5rem 2rem;
+}
+
+/* Responsive: sidebar colapsable en móvil */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 70px;
+        min-width: 70px;
+    }
+    .sidebar-brand span,
+    .sidebar-link span,
+    .sidebar-user span,
+    .sidebar-divider {
+        display: none;
+    }
+    .sidebar-brand {
+        justify-content: center;
+        padding: 1rem;
+    }
+    .sidebar-brand i {
+        font-size: 1.5rem;
+    }
+    .sidebar-link {
+        justify-content: center;
+        padding: 1rem;
+    }
+    .sidebar-link i {
+        margin: 0;
+    }
+    .sidebar-user {
+        justify-content: center;
+        padding: 0.5rem;
+    }
+    .main-content {
+        margin-left: 70px;
+        padding: 1rem;
+    }
 }
 
 /* Buttons */

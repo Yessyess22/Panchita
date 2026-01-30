@@ -12,33 +12,73 @@
 </head>
 
 <body>
-    <nav>
-        <ul>
-            <li><a href="{% url 'index' %}" class="{% if active == 'home' %}active{% endif %}"><i class="fas fa-drumstick-bite"></i> Pollos Panchita</a></li>
-            <li><a href="{% url 'index' %}" class="{% if active == 'home' %}active{% endif %}">Inicio</a></li>
-            <li><a href="{% url 'pos' %}" class="{% if active == 'pos' %}active{% endif %}">Punto de Venta</a></li>
-            <li><a href="{% url 'venta_index' %}" class="{% if active == 'ventas' %}active{% endif %}"><i class="fas fa-list-alt"></i> Ventas</a></li>
-            <li><a href="{% url 'cliente_index' %}" class="{% if active == 'clientes' %}active{% endif %}"><i class="fas fa-users"></i> Clientes</a></li>
+    <aside class="sidebar">
+        <a href="{% url 'index' %}" class="sidebar-brand">
+            <i class="fas fa-drumstick-bite"></i>
+            <span>Pollos Panchita</span>
+        </a>
+
+        <nav class="sidebar-nav">
+            <a href="{% url 'index' %}" class="sidebar-link {% if active == 'home' %}active{% endif %}" title="Inicio">
+                <i class="fas fa-home"></i>
+                <span>Inicio</span>
+            </a>
+            <a href="{% url 'pos' %}" class="sidebar-link {% if active == 'pos' %}active{% endif %}" title="Punto de Venta">
+                <i class="fas fa-cash-register"></i>
+                <span>Punto de Venta</span>
+            </a>
+            <a href="{% url 'venta_index' %}" class="sidebar-link {% if active == 'ventas' %}active{% endif %}" title="Ventas">
+                <i class="fas fa-list-alt"></i>
+                <span>Ventas</span>
+            </a>
+            <a href="{% url 'cliente_index' %}" class="sidebar-link {% if active == 'clientes' %}active{% endif %}" title="Clientes">
+                <i class="fas fa-users"></i>
+                <span>Clientes</span>
+            </a>
+            <a href="{% url 'cierre_caja_index' %}" class="sidebar-link {% if active == 'cierre_caja' %}active{% endif %}" title="Cierre de Caja">
+                <i class="fas fa-lock"></i>
+                <span>Cierre de Caja</span>
+            </a>
             {% if user.is_staff %}
-            <li><a href="{% url 'producto_index' %}" class="{% if active == 'productos' %}active{% endif %}"><i class="fas fa-boxes"></i> Productos</a></li>
-            <li><a href="{% url 'admin:index' %}" target="_blank" title="Panel de administración"><i class="fas fa-cog"></i> Admin</a></li>
+            <div class="sidebar-divider"></div>
+            <a href="{% url 'producto_index' %}" class="sidebar-link {% if active == 'productos' %}active{% endif %}" title="Productos">
+                <i class="fas fa-boxes"></i>
+                <span>Productos</span>
+            </a>
+            <a href="{% url 'reportes_index' %}" class="sidebar-link {% if active == 'reportes' %}active{% endif %}" title="Reportes">
+                <i class="fas fa-chart-bar"></i>
+                <span>Reportes</span>
+            </a>
+            <a href="{% url 'admin:index' %}" target="_blank" class="sidebar-link" title="Panel de administración">
+                <i class="fas fa-cog"></i>
+                <span>Admin</span>
+            </a>
             {% endif %}
-            <li style="margin-left: auto;" title="{% if user.is_staff %}Administrador{% else %}Cajero / Vendedor{% endif %}">
-                <span style="opacity: 0.9; font-size: 0.9rem;">{{ user.get_full_name|default:user.username }}</span>
-            </li>
-            <li><a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Salir</a></li>
-        </ul>
-    </nav>
+        </nav>
 
-    {% if messages %}
-    <div class="container">
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-        {% endfor %}
-    </div>
-    {% endif %}
+        <div class="sidebar-footer">
+            <div class="sidebar-user" title="{% if user.is_staff %}Administrador{% else %}Cajero / Vendedor{% endif %}">
+                <i class="fas fa-user-circle"></i>
+                <span>{{ user.get_full_name|default:user.username }}</span>
+            </div>
+            <a href="{% url 'logout' %}" class="sidebar-link sidebar-logout" title="Cerrar sesión">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Salir</span>
+            </a>
+        </div>
+    </aside>
 
-    {% block content %}{% endblock %}
+    <main class="main-content">
+        {% if messages %}
+        <div class="container">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
 
     {% block scripts %}{% endblock %}
 </body>

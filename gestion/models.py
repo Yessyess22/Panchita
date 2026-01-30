@@ -152,10 +152,20 @@ class Venta(models.Model):
         ('completado', 'Completado'),
         ('cancelado', 'Cancelado'),
     ]
+    MODO_CONSUMO_CHOICES = [
+        ('local', 'En el local'),
+        ('llevar', 'Para llevar'),
+    ]
     
     fecha = models.DateTimeField(auto_now_add=True)
     cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT)
     usuario = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Vendedor")
+    modo_consumo = models.CharField(
+        max_length=10,
+        choices=MODO_CONSUMO_CHOICES,
+        default='local',
+        verbose_name='Modo de consumo'
+    )
     
     # Estructura de totales mejorada
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -275,3 +285,55 @@ class Pago(models.Model):
                     f'El monto total de pagos ({total_pagado + self.monto}) '
                     f'excede el total de la venta ({self.venta.total})'
                 )
+
+
+class CierreCaja(models.Model):
+    """Registro de cierre de caja al final del turno."""
+    usuario = models.ForeignKey(User, on_delete=models.PROTECT, related_name='cierres_caja')
+    fecha_cierre = models.DateTimeField(default=timezone.now)
+    total_ventas = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        validators=[MinValueValidator(Decimal('0'))]
+    )
+    fondo_inicial = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal('0'))]
+    )
+    fondo_final = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal('0'))]
+    )
+    notas = models.TextField(blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Cierre de Caja"
+        verbose_name_plural = "Cierres de Caja"
+        ordering = ['-fecha_cierre']
+
+    def __str__(self):
+        return f"Cierre {self.usuario.username} - {self.fecha_cierre.strftime('%d/%m/%Y %H:%M')}"
+
+
+class CierreCajaDetallePago(models.Model):
+    """Total por método de pago en un cierre de caja."""
+    cierre = models.ForeignKey(CierreCaja, on_delete=models.CASCADE, related_name='detalles_pago')
+    metodo_pago = models.ForeignKey(MetodoPago, on_delete=models.PROTECT)
+    monto = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        validators=[MinValueValidator(Decimal('0'))]
+    )
+
+    class Meta:
+        verbose_name = "Detalle de pago (cierre)"
+        verbose_name_plural = "Detalles de pago (cierre)"
+        unique_together = [['cierre', 'metodo_pago']]

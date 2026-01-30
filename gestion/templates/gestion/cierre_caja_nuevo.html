@@ -1,0 +1,74 @@
+{% extends 'gestion/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .cierre-nuevo-container { max-width: 600px; margin: 0 auto; padding: 2rem; }
+    .cierre-nuevo-header { margin-bottom: 2rem; }
+    .cierre-nuevo-header h1 { color: var(--panchita-dark); font-size: 2rem; margin: 0; }
+    .resumen-card { background: linear-gradient(135deg, var(--panchita-red) 0%, var(--panchita-red-dark) 100%); border-radius: 15px; padding: 2rem; color: white; margin-bottom: 2rem; text-align: center; border-bottom: 4px solid var(--panchita-yellow); }
+    .resumen-card .total { font-size: 2.5rem; font-weight: 700; color: var(--panchita-yellow); }
+    .resumen-card .label { font-size: 1rem; opacity: 0.95; }
+    .detalle-metodos { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .detalle-metodos h3 { color: var(--panchita-dark); margin: 0 0 1rem 0; font-size: 1.1rem; }
+    .metodo-row { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #eee; }
+    .metodo-row:last-child { border-bottom: none; }
+    .form-card { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--panchita-dark); }
+    .form-group input, .form-group textarea { width: 100%; padding: 0.75rem; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; }
+    .form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--panchita-red); }
+    .btn-cerrar { background: var(--panchita-red); color: white; border: none; padding: 1rem 2rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; width: 100%; transition: all 0.2s; pointer-events: auto; }
+    .btn-cerrar:hover { background: var(--panchita-red-dark); transform: translateY(-2px); }
+    .btn-volver { display: inline-block; margin-top: 1rem; color: var(--panchita-red); text-decoration: none; font-weight: 600; cursor: pointer; pointer-events: auto; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cierre-nuevo-container">
+    <div class="cierre-nuevo-header">
+        <h1><i class="fas fa-cash-register"></i> Cerrar Caja</h1>
+        <p style="color: #666; margin-top: 0.5rem;">{{ hoy|date:"l d \d\e F Y" }}</p>
+    </div>
+
+    <div class="resumen-card">
+        <div class="label">Total ventas del día ({{ num_ventas }} ventas)</div>
+        <div class="total">Bs. {{ total_ventas|floatformat:2 }}</div>
+    </div>
+
+    {% if totales_por_metodo %}
+    <div class="detalle-metodos">
+        <h3><i class="fas fa-wallet"></i> Por método de pago</h3>
+        {% for metodo_nombre, monto in totales_por_metodo.items %}
+        <div class="metodo-row">
+            <span>{{ metodo_nombre }}</span>
+            <strong>Bs. {{ monto|floatformat:2 }}</strong>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="form-card">
+        <form method="post" action="{% url 'cierre_caja_nuevo' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="fondo_inicial">Fondo inicial (opcional)</label>
+                <input type="number" name="fondo_inicial" id="fondo_inicial" step="0.01" min="0" placeholder="Ej: 100.00">
+            </div>
+            <div class="form-group">
+                <label for="fondo_final">Fondo final (opcional)</label>
+                <input type="number" name="fondo_final" id="fondo_final" step="0.01" min="0" placeholder="Ej: 350.00">
+            </div>
+            <div class="form-group">
+                <label for="notas">Notas (opcional)</label>
+                <textarea name="notas" id="notas" rows="2" placeholder="Observaciones del turno"></textarea>
+            </div>
+            <button type="submit" class="btn-cerrar">
+                <i class="fas fa-check"></i> Registrar Cierre de Caja
+            </button>
+        </form>
+    </div>
+
+    <a href="{% url 'cierre_caja_index' %}" class="btn-volver"><i class="fas fa-arrow-left"></i> Volver a Cierres</a>
+</div>
+{% endblock %}

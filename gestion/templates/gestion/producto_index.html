@@ -1,12 +1,21 @@
 {% extends 'gestion/base.html' %}
 {% block content %}
 <div class="container" style="margin: 2rem auto; padding: 0 1rem;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
         <h2>Productos</h2>
-        <a href="{% url 'producto_crear' %}" class="btn"
-            style="background: #c41e3a; color: white; padding: 0.5rem 1.5rem; border-radius: 5px; text-decoration: none; font-weight: 600; border: 2px solid #f8d210;">
-            <i class="fas fa-plus"></i> Nuevo Producto
-        </a>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <form method="get" style="display: flex; gap: 0.5rem;">
+                <input type="text" name="q" value="{{ q }}" placeholder="Buscar por nombre o categoría..."
+                    style="padding: 0.5rem 1rem; border: 2px solid #dee2e6; border-radius: 8px; min-width: 220px;">
+                <button type="submit" style="background: #c41e3a; color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    <i class="fas fa-search"></i> Buscar
+                </button>
+            </form>
+            <a href="{% url 'producto_crear' %}" class="btn"
+                style="background: #c41e3a; color: white; padding: 0.5rem 1.5rem; border-radius: 5px; text-decoration: none; font-weight: 600; border: 2px solid #f8d210;">
+                <i class="fas fa-plus"></i> Nuevo Producto
+            </a>
+        </div>
     </div>
 
     <div style="background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden;">
@@ -26,7 +35,12 @@
                     <td style="padding: 1rem;">{{ producto.nombre }}</td>
                     <td style="padding: 1rem;">{{ producto.categoria }}</td>
                     <td style="padding: 1rem;">Bs. {{ producto.precio_final }}</td>
-                    <td style="padding: 1rem;">{{ producto.stock }}</td>
+                    <td style="padding: 1rem; {% if producto.stock < 5 %}color: #dc3545; font-weight: 700; background: rgba(220, 53, 69, 0.1);{% endif %}">
+                        {{ producto.stock }}
+                        {% if producto.stock < 5 %}
+                        <span style="color: #dc3545; font-size: 0.85rem;" title="Stock bajo"><i class="fas fa-exclamation-triangle"></i></span>
+                        {% endif %}
+                    </td>
                     <td style="padding: 1rem; text-align: center;">
                         <a href="{% url 'producto_editar' producto.pk %}" class="btn"
                             style="background: #007bff; color: white; padding: 0.4rem 0.8rem; border-radius: 5px; text-decoration: none; margin-right: 0.5rem; font-size: 0.9rem;">
@@ -41,7 +55,7 @@
                 {% empty %}
                 <tr>
                     <td colspan="5" style="padding: 2rem; text-align: center; color: #6c757d;">
-                        No hay productos registrados
+                        {% if q %}No hay productos que coincidan con "{{ q }}"{% else %}No hay productos registrados{% endif %}
                     </td>
                 </tr>
                 {% endfor %}
