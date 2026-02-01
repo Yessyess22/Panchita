@@ -292,7 +292,25 @@ python manage.py createsuperuser
 
 # Recolectar archivos estáticos
 python manage.py collectstatic
+
+# Backup de base de datos (MySQL o SQLite)
+python manage.py backup_db
+python manage.py backup_db --dir=/ruta/backups
 ```
+
+## Configuración para Producción
+
+Para desplegar en producción, configure las variables de entorno:
+
+```bash
+export DEBUG=False
+export DJANGO_SECRET_KEY="su-clave-secreta-muy-larga-y-aleatoria"
+export ALLOWED_HOSTS="midominio.com,192.168.1.10"
+```
+
+- **DEBUG**: Debe ser `False` en producción.
+- **DJANGO_SECRET_KEY**: Obligatorio en producción; use una clave aleatoria segura.
+- **ALLOWED_HOSTS**: Dominios o IPs permitidos, separados por coma.
 
 ## Docker Compose
 

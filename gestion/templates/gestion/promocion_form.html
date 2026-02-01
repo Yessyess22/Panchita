@@ -1,0 +1,80 @@
+{% extends 'gestion/base.html' %}
+{% block content %}
+<div class="container"
+    style="max-width: 600px; margin: 2rem auto; padding: 2rem; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+    <h2 style="margin-bottom: 1.5rem; color: #333; font-weight: 700;">
+        <i class="fas fa-tag"></i> {% if promocion %}Editar Promoción{% else %}Nueva Promoción{% endif %}
+    </h2>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #555;">Nombre *</label>
+            <input type="text" name="nombre" required maxlength="100"
+                value="{% if form_data %}{{ form_data.nombre }}{% elif promocion %}{{ promocion.nombre }}{% endif %}"
+                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #555;">Descripción</label>
+            <textarea name="descripcion" rows="3"
+                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">{% if form_data %}{{ form_data.descripcion }}{% elif promocion %}{{ promocion.descripcion|default:'' }}{% endif %}</textarea>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #555;">Descuento (%) *</label>
+            <input type="number" name="descuento_porcentaje" required min="0.01" max="100" step="0.01"
+                value="{% if form_data %}{{ form_data.descuento_porcentaje }}{% elif promocion %}{{ promocion.descuento_porcentaje }}{% endif %}"
+                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #555;">Fecha inicio *</label>
+                <input type="datetime-local" name="fecha_inicio" required
+                    value="{% if form_data.fecha_inicio %}{{ form_data.fecha_inicio }}{% elif promocion %}{{ promocion.fecha_inicio|date:'Y-m-d' }}T{{ promocion.fecha_inicio|time:'H:i' }}{% endif %}"
+                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #555;">Fecha fin *</label>
+                <input type="datetime-local" name="fecha_fin" required
+                    value="{% if form_data.fecha_fin %}{{ form_data.fecha_fin }}{% elif promocion %}{{ promocion.fecha_fin|date:'Y-m-d' }}T{{ promocion.fecha_fin|time:'H:i' }}{% endif %}"
+                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+            </div>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" name="activo" {% if form_data and form_data.activo or promocion and promocion.activo %}checked{% endif %}
+                    style="width: 1.2rem; height: 1.2rem;">
+                <span style="font-weight: 600; color: #555;">Activa</span>
+            </label>
+        </div>
+
+        <div style="margin-bottom: 2rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #555;">Productos (opcional)</label>
+            <p style="font-size: 0.9rem; color: #6c757d; margin-bottom: 0.5rem;">Si no selecciona productos, la promoción aplica a todos.</p>
+            <select name="productos" multiple size="8"
+                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+                {% for p in productos %}
+                <option value="{{ p.id }}" {% if p.id in productos_seleccionados %}selected{% endif %}>
+                    {{ p.nombre }} ({{ p.categoria.nombre }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn"
+                style="flex: 1; background: #c41e3a; color: white; padding: 1rem; border: 2px solid #f8d210; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem;">
+                <i class="fas fa-save"></i> Guardar
+            </button>
+            <a href="{% url 'promocion_index' %}" class="btn"
+                style="flex: 1; background: #6c757d; color: white; padding: 1rem; border-radius: 8px; text-decoration: none; display: flex; align-items: center; justify-content: center; font-weight: 600;">
+                <i class="fas fa-times"></i> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -9,12 +9,27 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
+# En producción: definir DJANGO_SECRET_KEY en variables de entorno.
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-default-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Desarrollo: DEBUG=True por defecto. Producción: export DEBUG=False
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = ['*']
+if not DEBUG and SECRET_KEY == 'django-insecure-default-key':
+    raise ValueError(
+        'En producción (DEBUG=False) debe definir DJANGO_SECRET_KEY en variables de entorno. '
+        'Ejemplo: export DJANGO_SECRET_KEY="su-clave-secreta-muy-larga-y-aleatoria"'
+    )
+
+# Hosts permitidos. Con DEBUG=True: permite todos (desarrollo). Con DEBUG=False: obligatorio definir ALLOWED_HOSTS.
+_allowed = os.environ.get('ALLOWED_HOSTS', '').strip()
+if _allowed:
+    ALLOWED_HOSTS = [h.strip() for h in _allowed.split(',') if h.strip()]
+elif DEBUG:
+    ALLOWED_HOSTS = ['*']  # Desarrollo: permite cualquier host
+else:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']  # Producción sin ALLOWED_HOSTS: solo local
 
 
 # Application definition
@@ -135,4 +150,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Login URL
 LOGIN_URL = 'login'
+
+# Datos de empresa para facturas (opcional)
+# EMPRESA_NIT = '123456789'  # Descomentar y configurar para mostrar NIT en facturas
 

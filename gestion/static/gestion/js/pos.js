@@ -88,12 +88,31 @@ class POS {
         const btnVentaMostrador = document.getElementById('btnVentaMostrador');
         if (btnVentaMostrador && window.posData && window.posData.clienteMostradorId) {
             btnVentaMostrador.addEventListener('click', () => {
+                const tipoDoc = document.querySelector('input[name="tipo_documento"]:checked');
+                if (tipoDoc && tipoDoc.value === 'factura') {
+                    alert('Para factura debe seleccionar un cliente con NIT/CI. No puede usar Mostrador.');
+                    return;
+                }
                 document.getElementById('cliente_id_hidden').value = window.posData.clienteMostradorId;
                 document.getElementById('cliente_search').value = 'Mostrador';
                 this.hideClienteDropdown();
                 this.toggleNuevoClienteForm(false);
             });
         }
+        // Tipo documento: mostrar requisito para factura
+        document.querySelectorAll('input[name="tipo_documento"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                const facturaRequisito = document.getElementById('factura_requisito');
+                if (facturaRequisito) facturaRequisito.style.display = radio.value === 'factura' ? 'block' : 'none';
+                if (radio.value === 'factura') {
+                    const clienteId = document.getElementById('cliente_id_hidden').value;
+                    if (clienteId && clienteId == window.posData?.clienteMostradorId) {
+                        document.getElementById('cliente_id_hidden').value = '';
+                        document.getElementById('cliente_search').value = '';
+                    }
+                }
+            });
+        });
     }
 
     addToCart(productId, productName, productPrice) {
@@ -265,9 +284,14 @@ class POS {
         const modal = document.getElementById('ventaCompletadaModal');
         const idEl = document.getElementById('ventaCompletadaId');
         const totalEl = document.getElementById('ventaCompletadaTotal');
+        const btnTicket = document.getElementById('btnVerImprimirTicket');
         if (modal && idEl && totalEl) {
             idEl.textContent = '#' + ventaId;
             totalEl.textContent = total || '0.00';
+            if (btnTicket && window.posData && window.posData.ventaDetailUrl) {
+                const path = window.posData.ventaDetailUrl.replace(/\/0\/$/, '/' + ventaId + '/');
+                btnTicket.href = path.startsWith('http') ? path : (window.location.origin + path);
+            }
             modal.style.display = 'block';
         }
     }
@@ -407,6 +431,13 @@ class POS {
 
         const modoConsumoEl = document.querySelector('input[name="modo_consumo"]:checked');
         const modoConsumo = modoConsumoEl ? modoConsumoEl.value : 'local';
+        const tipoDocEl = document.querySelector('input[name="tipo_documento"]:checked');
+        const tipoDocumento = tipoDocEl ? tipoDocEl.value : 'ticket';
+
+        if (tipoDocumento === 'factura' && clienteId == window.posData?.clienteMostradorId) {
+            alert('Para factura debe seleccionar un cliente con NIT/CI. No puede usar Mostrador.');
+            return;
+        }
 
         try {
             const response = await fetch(window.posData.procesarPagoUrl, {
@@ -419,6 +450,7 @@ class POS {
                     cliente_id: clienteId,
                     metodo_pago_id: metodoPagoId,
                     modo_consumo: modoConsumo,
+                    tipo_documento: tipoDocumento,
                     items: this.cart
                 })
             });

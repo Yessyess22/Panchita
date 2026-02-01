@@ -1,0 +1,61 @@
+{% extends 'gestion/base.html' %}
+{% block content %}
+<div class="container"
+    style="max-width: 500px; margin: 2rem auto; padding: 2rem; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+    <h2 style="margin-bottom: 1.5rem; color: #333; font-weight: 700;">
+        <i class="fas fa-user-plus"></i> Nuevo usuario
+    </h2>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #555;">Nombre de usuario *</label>
+            <input type="text" name="username" required maxlength="150" autocomplete="username"
+                value="{% if form_data %}{{ form_data.username }}{% endif %}"
+                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;"
+                placeholder="Ej: vendedor2">
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #555;">Email</label>
+            <input type="email" name="email" maxlength="254"
+                value="{% if form_data %}{{ form_data.email }}{% endif %}"
+                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;"
+                placeholder="Opcional">
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #555;">Contraseña *</label>
+            <input type="password" name="password" required minlength="8" autocomplete="new-password"
+                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;"
+                placeholder="Mínimo 8 caracteres">
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #555;">Confirmar contraseña *</label>
+            <input type="password" name="password_confirmar" required minlength="8" autocomplete="new-password"
+                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+        </div>
+
+        <div style="margin-bottom: 2rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #555;">Rol *</label>
+            <select name="rol" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+                <option value="vendedor" {% if form_data.rol == 'vendedor' %}selected{% endif %}>Vendedor (Cajero)</option>
+                <option value="administrador" {% if form_data.rol == 'administrador' %}selected{% endif %}>Administrador</option>
+            </select>
+        </div>
+
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn"
+                style="flex: 1; background: #28a745; color: white; padding: 1rem; border: 2px solid #1e7e34; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem;">
+                <i class="fas fa-save"></i> Crear usuario
+            </button>
+            <a href="{% url 'admin_usuarios_index' %}" class="btn"
+                style="flex: 1; background: #6c757d; color: white; padding: 1rem; border-radius: 8px; text-decoration: none; display: flex; align-items: center; justify-content: center; font-weight: 600;">
+                <i class="fas fa-times"></i> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

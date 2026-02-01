@@ -369,7 +369,7 @@
         </div>
         {% for venta in ventas %}
         <div class="table-row">
-            <div class="venta-id" title="N° de ticket">#{{ venta.id }}</div>
+            <div class="venta-id" title="N° de ticket">{% if venta.tipo_documento == 'factura' %}FAC-{{ venta.numero_factura }}{% else %}#{{ venta.id }}{% endif %}</div>
             <div class="venta-cliente">{{ venta.cliente.nombre_completo }}</div>
             <div class="venta-vendedor">{{ venta.usuario.username }}</div>
             <div class="venta-fecha">

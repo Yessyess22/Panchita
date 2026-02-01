@@ -1,0 +1,55 @@
+{% extends 'gestion/base.html' %}
+{% block content %}
+<div class="container" style="margin: 2rem auto; padding: 0 1rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2><i class="fas fa-tags"></i> Promociones</h2>
+        <a href="{% url 'promocion_crear' %}" class="btn"
+            style="background: #c41e3a; color: white; padding: 0.5rem 1.5rem; border-radius: 5px; text-decoration: none; font-weight: 600; border: 2px solid #f8d210;">
+            <i class="fas fa-plus"></i> Nueva Promoción
+        </a>
+    </div>
+
+    <div style="background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead style="background: #f8f9fa;">
+                <tr>
+                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">Nombre</th>
+                    <th style="padding: 1rem; text-align: center; border-bottom: 2px solid #dee2e6;">Descuento</th>
+                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">Vigencia</th>
+                    <th style="padding: 1rem; text-align: center; border-bottom: 2px solid #dee2e6;">Activo</th>
+                    <th style="padding: 1rem; text-align: center; border-bottom: 2px solid #dee2e6;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for promo in promociones %}
+                <tr style="border-bottom: 1px solid #dee2e6;">
+                    <td style="padding: 1rem;">{{ promo.nombre }}</td>
+                    <td style="padding: 1rem; text-align: center;">{{ promo.descuento_porcentaje }}%</td>
+                    <td style="padding: 1rem;">{{ promo.fecha_inicio|date:"d/m/Y H:i" }} — {{ promo.fecha_fin|date:"d/m/Y H:i" }}</td>
+                    <td style="padding: 1rem; text-align: center;">
+                        {% if promo.activo %}<span style="color: #28a745;"><i class="fas fa-check"></i></span>
+                        {% else %}<span style="color: #6c757d;"><i class="fas fa-times"></i></span>{% endif %}
+                    </td>
+                    <td style="padding: 1rem; text-align: center;">
+                        <a href="{% url 'promocion_editar' promo.pk %}" class="btn"
+                            style="background: var(--panchita-yellow); color: var(--panchita-dark); padding: 0.4rem 0.8rem; border-radius: 5px; text-decoration: none; margin-right: 0.5rem; font-size: 0.9rem;">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                        <a href="{% url 'promocion_eliminar' promo.pk %}" class="btn"
+                            style="background: #dc3545; color: white; padding: 0.4rem 0.8rem; border-radius: 5px; text-decoration: none; font-size: 0.9rem;">
+                            <i class="fas fa-trash"></i> Desactivar
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="padding: 2rem; text-align: center; color: #6c757d;">
+                        No hay promociones registradas
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

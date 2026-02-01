@@ -2,10 +2,10 @@
 {% block content %}
 <div class="container" style="margin: 2rem auto; padding: 0 1rem;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-        <h2><i class="fas fa-users"></i> Clientes</h2>
-        <a href="{% url 'index' %}" class="btn"
-            style="background: #6c757d; color: white; padding: 0.5rem 1.5rem; border-radius: 5px; text-decoration: none; font-weight: 600;">
-            <i class="fas fa-arrow-left"></i> Volver al Inicio
+        <h2><i class="fas fa-credit-card"></i> Métodos de Pago</h2>
+        <a href="{% url 'metodopago_crear' %}" class="btn"
+            style="background: #c41e3a; color: white; padding: 0.5rem 1.5rem; border-radius: 5px; text-decoration: none; font-weight: 600; border: 2px solid #f8d210;">
+            <i class="fas fa-plus"></i> Nuevo Método de Pago
         </a>
     </div>
 
@@ -13,26 +13,24 @@
         <table style="width: 100%; border-collapse: collapse;">
             <thead style="background: #f8f9fa;">
                 <tr>
-                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">Nombre completo</th>
-                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">CI / NIT</th>
-                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">Teléfono</th>
-                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">Email</th>
+                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">Nombre</th>
+                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">Tipo</th>
+                    <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #dee2e6;">Requiere validación</th>
                     <th style="padding: 1rem; text-align: center; border-bottom: 2px solid #dee2e6;">Acciones</th>
                 </tr>
             </thead>
             <tbody>
-                {% for cliente in clientes %}
+                {% for m in metodos %}
                 <tr style="border-bottom: 1px solid #dee2e6;">
-                    <td style="padding: 1rem;">{{ cliente.nombre_completo }}</td>
-                    <td style="padding: 1rem;">{{ cliente.ci_nit|default:"—" }}</td>
-                    <td style="padding: 1rem;">{{ cliente.telefono|default:"—" }}</td>
-                    <td style="padding: 1rem;">{{ cliente.email|default:"—" }}</td>
+                    <td style="padding: 1rem;">{{ m.nombre }}</td>
+                    <td style="padding: 1rem;">{{ m.get_tipo_display }}</td>
+                    <td style="padding: 1rem;">{% if m.requiere_validacion %}<i class="fas fa-check" style="color: #28a745;"></i> Sí{% else %}<i class="fas fa-times" style="color: #6c757d;"></i> No{% endif %}</td>
                     <td style="padding: 1rem; text-align: center;">
-                        <a href="{% url 'cliente_editar' cliente.pk %}" class="btn"
+                        <a href="{% url 'metodopago_editar' m.pk %}" class="btn"
                             style="background: var(--panchita-yellow); color: var(--panchita-dark); padding: 0.4rem 0.8rem; border-radius: 5px; text-decoration: none; margin-right: 0.5rem; font-size: 0.9rem;">
                             <i class="fas fa-edit"></i> Editar
                         </a>
-                        <a href="{% url 'cliente_eliminar' cliente.pk %}" class="btn"
+                        <a href="{% url 'metodopago_eliminar' m.pk %}" class="btn"
                             style="background: #dc3545; color: white; padding: 0.4rem 0.8rem; border-radius: 5px; text-decoration: none; font-size: 0.9rem;">
                             <i class="fas fa-trash"></i> Eliminar
                         </a>
@@ -40,8 +38,8 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" style="padding: 2rem; text-align: center; color: #6c757d;">
-                        No hay clientes registrados
+                    <td colspan="4" style="padding: 2rem; text-align: center; color: #6c757d;">
+                        No hay métodos de pago registrados
                     </td>
                 </tr>
                 {% endfor %}

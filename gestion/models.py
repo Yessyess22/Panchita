@@ -156,8 +156,24 @@ class Venta(models.Model):
         ('local', 'En el local'),
         ('llevar', 'Para llevar'),
     ]
+    TIPO_DOCUMENTO_CHOICES = [
+        ('ticket', 'Ticket'),
+        ('factura', 'Factura'),
+    ]
     
     fecha = models.DateTimeField(auto_now_add=True)
+    tipo_documento = models.CharField(
+        max_length=10,
+        choices=TIPO_DOCUMENTO_CHOICES,
+        default='ticket',
+        verbose_name='Tipo de documento'
+    )
+    numero_factura = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='Número de factura',
+        help_text='Solo para ventas tipo factura'
+    )
     cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT)
     usuario = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Vendedor")
     modo_consumo = models.CharField(

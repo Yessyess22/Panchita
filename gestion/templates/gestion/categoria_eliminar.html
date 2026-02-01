@@ -1,0 +1,33 @@
+{% extends 'gestion/base.html' %}
+{% block content %}
+<div class="container"
+    style="max-width: 600px; margin: 2rem auto; padding: 2rem; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+    <h2 style="color: #dc3545; margin-bottom: 1.5rem;">
+        <i class="fas fa-exclamation-triangle"></i> Eliminar Categoría
+    </h2>
+
+    <div
+        style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 1rem; margin-bottom: 1.5rem; border-radius: 5px;">
+        <p style="margin: 0; color: #856404;">
+            ¿Está seguro que desea eliminar la categoría <strong>"{{ categoria.nombre }}"</strong>?
+        </p>
+        <p style="margin: 0.5rem 0 0 0; color: #856404; font-size: 0.9rem;">
+            La categoría se marcará como inactiva. No se puede eliminar si tiene productos activos.
+        </p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn"
+                style="background: #dc3545; color: white; padding: 0.5rem 1.5rem; border: none; border-radius: 5px; cursor: pointer;">
+                <i class="fas fa-trash"></i> Confirmar Eliminación
+            </button>
+            <a href="{% url 'categoria_index' %}" class="btn"
+                style="background: #6c757d; color: white; padding: 0.5rem 1.5rem; border-radius: 5px; text-decoration: none; display: inline-block;">
+                <i class="fas fa-times"></i> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

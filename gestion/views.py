@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
@@ -67,6 +68,11 @@ def login_view(request):
                 messages.error(request, 'Tu cuenta está desactivada. Contacta al administrador.')
             else:
                 auth_login(request, user)
+                # "Recordarme": sesión 2 semanas si está marcado, si no expira al cerrar navegador
+                if request.POST.get('remember'):
+                    request.session.set_expiry(1209600)  # 2 semanas en segundos
+                else:
+                    request.session.set_expiry(0)  # expira al cerrar el navegador
                 rol = 'Administrador' if user.is_staff else 'Cajero / Vendedor'
                 messages.success(request, f'Bienvenido, {user.get_full_name() or user.username}. Sesión: {rol}.')
                 next_url = request.GET.get('next', 'index')
@@ -81,6 +87,201 @@ def logout_view(request):
     auth_logout(request)
     messages.success(request, 'Sesión cerrada exitosamente.')
     return redirect('login')
+
+
+@login_required
+@staff_required
+def admin_index(request):
+    """Página Admin: cambiar contraseña propia y del vendedor (solo staff)."""
+    return render(request, 'gestion/admin_index.html', {'active': 'admin'})
+
+
+@login_required
+@staff_required
+def cuenta_cambiar_password(request):
+    """Cambiar contraseña del usuario actual."""
+    if request.method == 'POST':
+        actual = request.POST.get('password_actual', '')
+        nueva = request.POST.get('password_nueva', '')
+        confirmar = request.POST.get('password_confirmar', '')
+
+        if not actual:
+            messages.error(request, 'Debe ingresar su contraseña actual.')
+            return render(request, 'gestion/cuenta_cambiar_password.html', {'active': 'admin'})
+
+        if not request.user.check_password(actual):
+            messages.error(request, 'La contraseña actual no es correcta.')
+            return render(request, 'gestion/cuenta_cambiar_password.html', {'active': 'admin'})
+
+        if not nueva:
+            messages.error(request, 'La nueva contraseña es obligatoria.')
+            return render(request, 'gestion/cuenta_cambiar_password.html', {'active': 'admin'})
+
+        if len(nueva) < 8:
+            messages.error(request, 'La nueva contraseña debe tener al menos 8 caracteres.')
+            return render(request, 'gestion/cuenta_cambiar_password.html', {'active': 'admin'})
+
+        if nueva != confirmar:
+            messages.error(request, 'La nueva contraseña y la confirmación no coinciden.')
+            return render(request, 'gestion/cuenta_cambiar_password.html', {'active': 'admin'})
+
+        request.user.set_password(nueva)
+        request.user.save()
+        auth_login(request, request.user)  # Mantener sesión activa tras cambiar contraseña
+        messages.success(request, 'Contraseña actualizada correctamente.')
+        return redirect('admin_index')
+
+    return render(request, 'gestion/cuenta_cambiar_password.html', {'active': 'admin'})
+
+
+@login_required
+@staff_required
+def admin_cambiar_password_vendedor(request):
+    """Admin cambia la contraseña de un vendedor (solo staff)."""
+    from django.contrib.auth.models import User
+    vendedores = User.objects.filter(is_staff=False, is_active=True).order_by('username')
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        nueva = request.POST.get('password_nueva', '')
+        confirmar = request.POST.get('password_confirmar', '')
+        if not user_id:
+            messages.error(request, 'Debe seleccionar un usuario.')
+            return render(request, 'gestion/admin_cambiar_password_vendedor.html', {
+                'vendedores': vendedores,
+                'active': 'admin',
+            })
+        try:
+            usuario = User.objects.get(pk=user_id, is_staff=False)
+        except User.DoesNotExist:
+            messages.error(request, 'Usuario no encontrado.')
+            return render(request, 'gestion/admin_cambiar_password_vendedor.html', {
+                'vendedores': vendedores,
+                'active': 'admin',
+            })
+        if not nueva:
+            messages.error(request, 'La nueva contraseña es obligatoria.')
+            return render(request, 'gestion/admin_cambiar_password_vendedor.html', {
+                'vendedores': vendedores,
+                'usuario_seleccionado': usuario,
+                'active': 'admin',
+            })
+        if len(nueva) < 8:
+            messages.error(request, 'La contraseña debe tener al menos 8 caracteres.')
+            return render(request, 'gestion/admin_cambiar_password_vendedor.html', {
+                'vendedores': vendedores,
+                'usuario_seleccionado': usuario,
+                'active': 'admin',
+            })
+        if nueva != confirmar:
+            messages.error(request, 'La contraseña y la confirmación no coinciden.')
+            return render(request, 'gestion/admin_cambiar_password_vendedor.html', {
+                'vendedores': vendedores,
+                'usuario_seleccionado': usuario,
+                'active': 'admin',
+            })
+        usuario.set_password(nueva)
+        usuario.save()
+        messages.success(request, f'Contraseña de "{usuario.username}" actualizada correctamente.')
+        return redirect('admin_index')
+    return render(request, 'gestion/admin_cambiar_password_vendedor.html', {
+        'vendedores': vendedores,
+        'active': 'admin',
+    })
+
+
+@login_required
+@staff_required
+def admin_usuarios_index(request):
+    """Lista de usuarios del sistema (solo staff)."""
+    from django.contrib.auth.models import User
+    usuarios = User.objects.filter(is_active=True).order_by('-is_staff', 'username')
+    return render(request, 'gestion/admin_usuarios_index.html', {
+        'usuarios': usuarios,
+        'active': 'admin',
+    })
+
+
+@login_required
+@staff_required
+def admin_usuarios_crear(request):
+    """Crear nuevo usuario con cuenta, contraseña y rol (solo staff)."""
+    from django.contrib.auth.models import User
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '')
+        confirmar = request.POST.get('password_confirmar', '')
+        rol = request.POST.get('rol', 'vendedor')
+        email = (request.POST.get('email') or '').strip() or None
+
+        if not username:
+            messages.error(request, 'El nombre de usuario es obligatorio.')
+            return render(request, 'gestion/admin_usuarios_crear.html', {
+                'active': 'admin',
+                'form_data': request.POST,
+            })
+        if User.objects.filter(username=username).exists():
+            messages.error(request, f'Ya existe un usuario con el nombre "{username}".')
+            return render(request, 'gestion/admin_usuarios_crear.html', {
+                'active': 'admin',
+                'form_data': request.POST,
+            })
+        if not password:
+            messages.error(request, 'La contraseña es obligatoria.')
+            return render(request, 'gestion/admin_usuarios_crear.html', {
+                'active': 'admin',
+                'form_data': request.POST,
+            })
+        if len(password) < 8:
+            messages.error(request, 'La contraseña debe tener al menos 8 caracteres.')
+            return render(request, 'gestion/admin_usuarios_crear.html', {
+                'active': 'admin',
+                'form_data': request.POST,
+            })
+        if password != confirmar:
+            messages.error(request, 'La contraseña y la confirmación no coinciden.')
+            return render(request, 'gestion/admin_usuarios_crear.html', {
+                'active': 'admin',
+                'form_data': request.POST,
+            })
+        if rol not in ('administrador', 'vendedor'):
+            rol = 'vendedor'
+
+        is_staff = rol == 'administrador'
+        user = User.objects.create_user(
+            username=username,
+            password=password,
+            email=email or f'{username}@panchita.com',
+            is_staff=is_staff,
+            is_superuser=is_staff,
+            is_active=True,
+        )
+        rol_display = 'Administrador' if is_staff else 'Vendedor'
+        messages.success(request, f'Usuario "{username}" ({rol_display}) creado correctamente.')
+        return redirect('admin_usuarios_index')
+
+    return render(request, 'gestion/admin_usuarios_crear.html', {'active': 'admin'})
+
+
+@login_required
+@staff_required
+def admin_usuarios_eliminar(request, pk):
+    """Desactivar usuario (solo staff)."""
+    from django.contrib.auth.models import User
+    usuario = get_object_or_404(User, pk=pk)
+    if request.user.pk == usuario.pk:
+        messages.error(request, 'No puedes desactivar tu propia cuenta.')
+        return redirect('admin_usuarios_index')
+    if request.method == 'POST':
+        nombre = usuario.username
+        usuario.is_active = False
+        usuario.save()
+        messages.success(request, f'Usuario "{nombre}" desactivado correctamente.')
+        return redirect('admin_usuarios_index')
+    return render(request, 'gestion/admin_usuarios_eliminar.html', {
+        'usuario': usuario,
+        'active': 'admin',
+    })
+
 
 @login_required
 def index(request):
@@ -149,7 +350,7 @@ def index(request):
         _ = list(todas_las_ventas)
     except OperationalError as e:
         err_msg = str(e).lower()
-        if any(x in err_msg for x in ('modo_consumo', 'no such column', 'does not exist', "doesn't exist")):
+        if any(x in err_msg for x in ('modo_consumo', 'tipo_documento', 'numero_factura', 'no such column', 'does not exist', "doesn't exist")):
             messages.error(
                 request,
                 'La base de datos necesita actualizarse. Ejecute: python manage.py migrate (o ./migrar.sh)'
@@ -551,6 +752,397 @@ def producto_eliminar(request, pk):
     return render(request, 'gestion/producto_eliminar.html', context)
 
 
+# --- Categorías (CRUD) ---
+
+@login_required
+@staff_required
+def categoria_index(request):
+    categorias = Categoria.objects.filter(activo=True).order_by('nombre')
+    context = {'categorias': categorias, 'active': 'categorias'}
+    return render(request, 'gestion/categoria_index.html', context)
+
+
+@login_required
+@staff_required
+def categoria_crear(request):
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre', '').strip()
+        descripcion = (request.POST.get('descripcion') or '').strip() or None
+        if not nombre:
+            messages.error(request, 'El nombre de la categoría es obligatorio.')
+            return render(request, 'gestion/categoria_form.html', {
+                'active': 'categorias',
+                'form_data': request.POST,
+            })
+        if Categoria.objects.filter(nombre__iexact=nombre).exists():
+            messages.error(request, f'Ya existe una categoría con el nombre "{nombre}".')
+            return render(request, 'gestion/categoria_form.html', {
+                'active': 'categorias',
+                'form_data': request.POST,
+            })
+        Categoria.objects.create(nombre=nombre, descripcion=descripcion)
+        messages.success(request, f'Categoría "{nombre}" creada correctamente.')
+        return redirect('categoria_index')
+    return render(request, 'gestion/categoria_form.html', {'active': 'categorias'})
+
+
+@login_required
+@staff_required
+def categoria_editar(request, pk):
+    categoria = get_object_or_404(Categoria, pk=pk)
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre', '').strip()
+        descripcion = (request.POST.get('descripcion') or '').strip() or None
+        if not nombre:
+            messages.error(request, 'El nombre de la categoría es obligatorio.')
+            return render(request, 'gestion/categoria_form.html', {
+                'categoria': categoria,
+                'active': 'categorias',
+                'form_data': request.POST,
+            })
+        otro = Categoria.objects.filter(nombre__iexact=nombre).exclude(pk=pk)
+        if otro.exists():
+            messages.error(request, f'Ya existe otra categoría con el nombre "{nombre}".')
+            return render(request, 'gestion/categoria_form.html', {
+                'categoria': categoria,
+                'active': 'categorias',
+                'form_data': request.POST,
+            })
+        categoria.nombre = nombre
+        categoria.descripcion = descripcion
+        categoria.save()
+        messages.success(request, f'Categoría "{nombre}" actualizada correctamente.')
+        return redirect('categoria_index')
+    return render(request, 'gestion/categoria_form.html', {
+        'categoria': categoria,
+        'active': 'categorias',
+    })
+
+
+@login_required
+@staff_required
+def categoria_eliminar(request, pk):
+    categoria = get_object_or_404(Categoria, pk=pk)
+    if request.method == 'POST':
+        if categoria.productos.filter(activo=True).exists():
+            messages.error(
+                request,
+                f'No se puede eliminar la categoría "{categoria.nombre}" porque tiene productos activos. '
+                'Desactive o elimine los productos primero.'
+            )
+            return redirect('categoria_index')
+        categoria.activo = False
+        categoria.save()
+        messages.success(request, f'Categoría "{categoria.nombre}" eliminada correctamente.')
+        return redirect('categoria_index')
+    return render(request, 'gestion/categoria_eliminar.html', {
+        'categoria': categoria,
+        'active': 'categorias',
+    })
+
+
+# --- Métodos de Pago (CRUD) ---
+
+@login_required
+@staff_required
+def metodopago_index(request):
+    metodos = MetodoPago.objects.filter(activo=True).order_by('nombre')
+    context = {'metodos': metodos, 'active': 'metodos_pago'}
+    return render(request, 'gestion/metodopago_index.html', context)
+
+
+@login_required
+@staff_required
+def metodopago_crear(request):
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre', '').strip()
+        tipo = request.POST.get('tipo', 'efectivo')
+        descripcion = (request.POST.get('descripcion') or '').strip() or None
+        requiere_validacion = request.POST.get('requiere_validacion') == 'on'
+        if not nombre:
+            messages.error(request, 'El nombre del método de pago es obligatorio.')
+            return render(request, 'gestion/metodopago_form.html', {
+                'active': 'metodos_pago',
+                'form_data': request.POST,
+                'tipo_actual': request.POST.get('tipo', 'efectivo'),
+                'requiere_validacion_checked': request.POST.get('requiere_validacion') == 'on',
+            })
+        if tipo not in ('efectivo', 'tarjeta', 'qr', 'transferencia'):
+            tipo = 'efectivo'
+        if MetodoPago.objects.filter(nombre__iexact=nombre).exists():
+            messages.error(request, f'Ya existe un método de pago con el nombre "{nombre}".')
+            return render(request, 'gestion/metodopago_form.html', {
+                'active': 'metodos_pago',
+                'form_data': request.POST,
+                'tipo_actual': tipo,
+                'requiere_validacion_checked': requiere_validacion,
+            })
+        MetodoPago.objects.create(
+            nombre=nombre,
+            tipo=tipo,
+            descripcion=descripcion,
+            requiere_validacion=requiere_validacion,
+        )
+        messages.success(request, f'Método de pago "{nombre}" creado correctamente.')
+        return redirect('metodopago_index')
+    return render(request, 'gestion/metodopago_form.html', {
+        'active': 'metodos_pago',
+        'tipo_actual': 'efectivo',
+        'requiere_validacion_checked': False,
+    })
+
+
+@login_required
+@staff_required
+def metodopago_editar(request, pk):
+    metodo = get_object_or_404(MetodoPago, pk=pk)
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre', '').strip()
+        tipo = request.POST.get('tipo', 'efectivo')
+        descripcion = (request.POST.get('descripcion') or '').strip() or None
+        requiere_validacion = request.POST.get('requiere_validacion') == 'on'
+        if not nombre:
+            messages.error(request, 'El nombre del método de pago es obligatorio.')
+            return render(request, 'gestion/metodopago_form.html', {
+                'metodo': metodo,
+                'active': 'metodos_pago',
+                'form_data': request.POST,
+                'tipo_actual': request.POST.get('tipo', 'efectivo'),
+                'requiere_validacion_checked': request.POST.get('requiere_validacion') == 'on',
+            })
+        if tipo not in ('efectivo', 'tarjeta', 'qr', 'transferencia'):
+            tipo = 'efectivo'
+        otro = MetodoPago.objects.filter(nombre__iexact=nombre).exclude(pk=pk)
+        if otro.exists():
+            messages.error(request, f'Ya existe otro método de pago con el nombre "{nombre}".')
+            return render(request, 'gestion/metodopago_form.html', {
+                'metodo': metodo,
+                'active': 'metodos_pago',
+                'form_data': request.POST,
+                'tipo_actual': tipo,
+                'requiere_validacion_checked': requiere_validacion,
+            })
+        metodo.nombre = nombre
+        metodo.tipo = tipo
+        metodo.descripcion = descripcion
+        metodo.requiere_validacion = requiere_validacion
+        metodo.save()
+        messages.success(request, f'Método de pago "{nombre}" actualizado correctamente.')
+        return redirect('metodopago_index')
+    return render(request, 'gestion/metodopago_form.html', {
+        'metodo': metodo,
+        'active': 'metodos_pago',
+        'tipo_actual': metodo.tipo,
+        'requiere_validacion_checked': metodo.requiere_validacion,
+    })
+
+
+@login_required
+@staff_required
+def metodopago_eliminar(request, pk):
+    metodo = get_object_or_404(MetodoPago, pk=pk)
+    if request.method == 'POST':
+        metodo.activo = False
+        metodo.save()
+        messages.success(request, f'Método de pago "{metodo.nombre}" eliminado correctamente.')
+        return redirect('metodopago_index')
+    return render(request, 'gestion/metodopago_eliminar.html', {
+        'metodo': metodo,
+        'active': 'metodos_pago',
+    })
+
+
+# --- Promociones (CRUD) ---
+
+def _parse_datetime_local(value):
+    """Parsea valor datetime-local (YYYY-MM-DDTHH:MM) a datetime con timezone."""
+    from django.utils import timezone
+    from datetime import datetime
+    if not value or not value.strip():
+        return None
+    try:
+        dt_naive = datetime.strptime(value.strip()[:16], '%Y-%m-%dT%H:%M')
+        return timezone.make_aware(dt_naive, timezone.get_current_timezone())
+    except (ValueError, TypeError):
+        return None
+
+
+@login_required
+@staff_required
+def promocion_index(request):
+    promos = Promocion.objects.all().order_by('-fecha_inicio')
+    return render(request, 'gestion/promocion_index.html', {
+        'promociones': promos,
+        'active': 'promociones',
+    })
+
+
+@login_required
+@staff_required
+def promocion_crear(request):
+    productos = Producto.objects.filter(activo=True).order_by('nombre')
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre', '').strip()
+        descripcion = request.POST.get('descripcion', '').strip() or ''
+        try:
+            descuento = float(request.POST.get('descuento_porcentaje', 0) or 0)
+        except (ValueError, TypeError):
+            descuento = 0
+        fecha_inicio = _parse_datetime_local(request.POST.get('fecha_inicio', ''))
+        fecha_fin = _parse_datetime_local(request.POST.get('fecha_fin', ''))
+        activo = request.POST.get('activo') == 'on'
+        producto_ids = request.POST.getlist('productos')
+
+        def _productos_seleccionados():
+            return [int(x) for x in request.POST.getlist('productos') if str(x).isdigit()]
+
+        if not nombre:
+            messages.error(request, 'El nombre de la promoción es obligatorio.')
+            return render(request, 'gestion/promocion_form.html', {
+                'productos': productos,
+                'active': 'promociones',
+                'form_data': request.POST,
+                'productos_seleccionados': _productos_seleccionados(),
+            })
+        if descuento <= 0 or descuento > 100:
+            messages.error(request, 'El descuento debe estar entre 0.01 y 100.')
+            return render(request, 'gestion/promocion_form.html', {
+                'productos': productos,
+                'active': 'promociones',
+                'form_data': request.POST,
+                'productos_seleccionados': _productos_seleccionados(),
+            })
+        if not fecha_inicio or not fecha_fin:
+            messages.error(request, 'Las fechas de inicio y fin son obligatorias.')
+            return render(request, 'gestion/promocion_form.html', {
+                'productos': productos,
+                'active': 'promociones',
+                'form_data': request.POST,
+                'productos_seleccionados': _productos_seleccionados(),
+            })
+        if fecha_fin <= fecha_inicio:
+            messages.error(request, 'La fecha fin debe ser posterior a la fecha inicio.')
+            return render(request, 'gestion/promocion_form.html', {
+                'productos': productos,
+                'active': 'promociones',
+                'form_data': request.POST,
+                'productos_seleccionados': _productos_seleccionados(),
+            })
+
+        from decimal import Decimal
+        promo = Promocion.objects.create(
+            nombre=nombre,
+            descripcion=descripcion,
+            descuento_porcentaje=Decimal(str(descuento)),
+            fecha_inicio=fecha_inicio,
+            fecha_fin=fecha_fin,
+            activo=activo,
+        )
+        if producto_ids:
+            promo.productos.set(Producto.objects.filter(pk__in=producto_ids, activo=True))
+        messages.success(request, f'Promoción "{nombre}" creada correctamente.')
+        return redirect('promocion_index')
+    return render(request, 'gestion/promocion_form.html', {
+        'productos': productos,
+        'active': 'promociones',
+        'productos_seleccionados': [],
+    })
+
+
+@login_required
+@staff_required
+def promocion_editar(request, pk):
+    promo = get_object_or_404(Promocion, pk=pk)
+    productos = Producto.objects.filter(activo=True).order_by('nombre')
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre', '').strip()
+        descripcion = request.POST.get('descripcion', '').strip() or ''
+        try:
+            descuento = float(request.POST.get('descuento_porcentaje', 0) or 0)
+        except (ValueError, TypeError):
+            descuento = 0
+        fecha_inicio = _parse_datetime_local(request.POST.get('fecha_inicio', ''))
+        fecha_fin = _parse_datetime_local(request.POST.get('fecha_fin', ''))
+        activo = request.POST.get('activo') == 'on'
+        producto_ids = request.POST.getlist('productos')
+
+        def _productos_seleccionados():
+            return [int(x) for x in request.POST.getlist('productos') if str(x).isdigit()]
+
+        if not nombre:
+            messages.error(request, 'El nombre de la promoción es obligatorio.')
+            return render(request, 'gestion/promocion_form.html', {
+                'promocion': promo,
+                'productos': productos,
+                'active': 'promociones',
+                'form_data': request.POST,
+                'productos_seleccionados': _productos_seleccionados(),
+            })
+        if descuento <= 0 or descuento > 100:
+            messages.error(request, 'El descuento debe estar entre 0.01 y 100.')
+            return render(request, 'gestion/promocion_form.html', {
+                'promocion': promo,
+                'productos': productos,
+                'active': 'promociones',
+                'form_data': request.POST,
+                'productos_seleccionados': _productos_seleccionados(),
+            })
+        if not fecha_inicio or not fecha_fin:
+            messages.error(request, 'Las fechas de inicio y fin son obligatorias.')
+            return render(request, 'gestion/promocion_form.html', {
+                'promocion': promo,
+                'productos': productos,
+                'active': 'promociones',
+                'form_data': request.POST,
+                'productos_seleccionados': _productos_seleccionados(),
+            })
+        if fecha_fin <= fecha_inicio:
+            messages.error(request, 'La fecha fin debe ser posterior a la fecha inicio.')
+            return render(request, 'gestion/promocion_form.html', {
+                'promocion': promo,
+                'productos': productos,
+                'active': 'promociones',
+                'form_data': request.POST,
+                'productos_seleccionados': _productos_seleccionados(),
+            })
+
+        from decimal import Decimal
+        promo.nombre = nombre
+        promo.descripcion = descripcion
+        promo.descuento_porcentaje = Decimal(str(descuento))
+        promo.fecha_inicio = fecha_inicio
+        promo.fecha_fin = fecha_fin
+        promo.activo = activo
+        promo.save()
+        if producto_ids is not None:
+            promo.productos.set(Producto.objects.filter(pk__in=producto_ids, activo=True))
+        messages.success(request, f'Promoción "{nombre}" actualizada correctamente.')
+        return redirect('promocion_index')
+    productos_seleccionados = list(promo.productos.values_list('pk', flat=True))
+    return render(request, 'gestion/promocion_form.html', {
+        'promocion': promo,
+        'productos': productos,
+        'active': 'promociones',
+        'productos_seleccionados': productos_seleccionados,
+    })
+
+
+@login_required
+@staff_required
+def promocion_eliminar(request, pk):
+    promo = get_object_or_404(Promocion, pk=pk)
+    if request.method == 'POST':
+        nombre = promo.nombre
+        promo.activo = False
+        promo.save()
+        messages.success(request, f'Promoción "{nombre}" desactivada correctamente.')
+        return redirect('promocion_index')
+    return render(request, 'gestion/promocion_eliminar.html', {
+        'promocion': promo,
+        'active': 'promociones',
+    })
+
+
 @login_required
 def pos_procesar_pago(request):
     """Process payment from POS"""
@@ -572,14 +1164,34 @@ def pos_procesar_pago(request):
             modo_consumo = data.get('modo_consumo', 'local')
             if modo_consumo not in ('local', 'llevar'):
                 modo_consumo = 'local'
+            tipo_documento = data.get('tipo_documento', 'ticket')
+            if tipo_documento not in ('ticket', 'factura'):
+                tipo_documento = 'ticket'
+            
+            # Para factura: cliente debe tener NIT/CI válido (no Mostrador)
+            if tipo_documento == 'factura':
+                nit_valido = cliente.ci_nit and str(cliente.ci_nit).strip() and str(cliente.ci_nit).upper() != 'MOSTRADOR'
+                if not nit_valido:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Para factura debe seleccionar un cliente con NIT/CI. No puede usar Mostrador.'
+                    }, status=400)
             
             # Create sale with explicit timezone-aware datetime
             from django.utils import timezone
+            from django.db.models import Max
             venta = Venta.objects.create(
                 cliente=cliente,
                 usuario=request.user,
-                modo_consumo=modo_consumo
+                modo_consumo=modo_consumo,
+                tipo_documento=tipo_documento
             )
+            if tipo_documento == 'factura':
+                ultimo_num = Venta.objects.filter(tipo_documento='factura').aggregate(
+                    m=Max('numero_factura')
+                )['m'] or 0
+                venta.numero_factura = ultimo_num + 1
+                venta.save()
             # Asegurar que la fecha se guarde correctamente
             if not venta.fecha:
                 venta.fecha = timezone.now()
@@ -772,7 +1384,7 @@ def venta_index(request):
         ventas = list(ventas[:50])
     except OperationalError as e:
         err_msg = str(e).lower()
-        if any(x in err_msg for x in ('modo_consumo', 'no such column', 'does not exist', "doesn't exist")):
+        if any(x in err_msg for x in ('modo_consumo', 'tipo_documento', 'numero_factura', 'no such column', 'does not exist', "doesn't exist")):
             messages.error(
                 request,
                 'La base de datos necesita actualizarse. Ejecute: python manage.py migrate (o ./migrar.sh)'
@@ -803,15 +1415,21 @@ def venta_detail(request, pk):
         )
     except OperationalError as e:
         err_msg = str(e).lower()
-        if any(x in err_msg for x in ('modo_consumo', 'no such column', 'does not exist', "doesn't exist")):
+        if any(x in err_msg for x in ('modo_consumo', 'tipo_documento', 'numero_factura', 'no such column', 'does not exist', "doesn't exist")):
             messages.error(
                 request,
                 'La base de datos necesita actualizarse. Ejecute: python manage.py migrate (o ./migrar.sh)'
             )
             return redirect('venta_index')
         raise
+    # Datos de empresa para factura (configurable)
+    empresa = {
+        'nombre': 'Pollos Panchita',
+        'nit': getattr(settings, 'EMPRESA_NIT', ''),  # Opcional: definir en settings
+    }
     return render(request, 'gestion/venta_detail.html', {
         'venta': venta,
+        'empresa': empresa,
         'active': 'ventas'
     })
 
