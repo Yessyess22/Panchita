@@ -644,7 +644,99 @@ Panchita/
 - Docker Engine 20.10+
 - Docker Compose 1.29+
 
-### 5.3 Instalación desde GitHub
+### 5.3 Inicio Rápido con Scripts Automáticos ⚡ (RECOMENDADO)
+
+El proyecto incluye scripts de inicio automático que simplifican enormemente el proceso de arranque. Estos scripts detectan automáticamente tu entorno y configuran todo lo necesario.
+
+#### Windows
+
+```cmd
+start.bat
+```
+
+#### Linux / macOS
+
+```bash
+chmod +x start.sh
+./start.sh
+```
+
+**¿Qué hacen estos scripts?**
+
+Los scripts detectan automáticamente tu entorno y eligen la mejor opción:
+
+1. **Si tienes Docker instalado:**
+   - Usa Docker (NO requiere Python ni pip en tu PC)
+   - Configura MySQL + Django en contenedores
+   - Red configurada: 192.168.100.0/24
+   - Te pregunta cómo iniciar:
+     - Opción 1: Primer inicio / Reconstruir (recomendado)
+     - Opción 2: Inicio rápido (usa imágenes existentes)
+     - Opción 3: Segundo plano (detached)
+     - Opción 4: Detener contenedores
+     - Opción 5: Ver estado
+
+2. **Si NO tienes Docker:**
+   - Usa SQLite local (requiere Python 3.8+ y pip)
+   - Detecta Python automáticamente
+   - Instala dependencias si faltan
+   - Ejecuta migraciones automáticamente
+   - Recopila archivos estáticos
+   - Verifica si hay datos y ofrece cargarlos
+   - Inicia el servidor de desarrollo
+
+**Ventajas:**
+
+- ✅ **Un solo comando** para arrancar todo el proyecto
+- ✅ **Detección automática** de entorno (Docker o local)
+- ✅ **Instalación automática** de dependencias faltantes
+- ✅ **Configuración automática** de base de datos
+- ✅ **Migraciones automáticas**
+- ✅ **Compatible** con Windows, Linux, macOS, WSL
+
+**Ejemplo de uso en Windows:**
+
+```cmd
+C:\...\PanchitaApp> start.bat
+
+============================================
+Pollos Panchita - Arranque Automático
+Sistema: Windows
+============================================
+
+[INFO] Detectando entorno de ejecución...
+[ADVERTENCIA] Docker no disponible
+
+=== Modo: Ejecución Local (SQLite) ===
+Requiere: Python 3.8+ y pip instalados
+
+[OK] Usando venv: .venv
+[INFO] Verificando dependencias...
+[OK] Django instalado
+[INFO] Preparando estructura...
+[OK] Directorios listos
+[OK] Base de datos: SQLite
+[INFO] Ejecutando migraciones...
+[OK] Migraciones aplicadas
+
+=== Información del Sistema ===
+Sistema:       Windows
+Python:        3.13.1
+Django:        5.0
+Base de datos: SQLite (db.sqlite3)
+
+=== Iniciando Servidor ===
+Acceso: http://127.0.0.1:8000
+Presiona Ctrl+C para detener
+```
+
+Para más detalles, consulta el archivo [`INICIO_RAPIDO.md`](file:///c:/Users/LOQ%20LENOVO/Documents/UPDS/Tecnologia%20Web%20I/Panchita/PanchitaApp/INICIO_RAPIDO.md) en el repositorio.
+
+---
+
+### 5.4 Instalación Manual (Paso a Paso)
+
+Si prefieres instalar manualmente o necesitas entender el proceso en detalle, sigue estas instrucciones:
 
 #### Opción A: Instalación Local con SQLite (Recomendado para Desarrollo)
 
@@ -724,7 +816,7 @@ docker-compose exec web python load_products.py
 - **MySQL:** `3309` (puerto externo)
 - **phpMyAdmin:** `8081` (opcional, si está configurado)
 
-### 5.4 Actualización del Proyecto
+### 5.5 Actualización del Proyecto
 
 Si ya tienes el repositorio clonado y quieres obtener las últimas actualizaciones:
 
@@ -749,7 +841,7 @@ python manage.py migrate
 python manage.py runserver 8080
 ```
 
-### 5.5 Variables de Entorno
+### 5.6 Variables de Entorno
 
 El sistema utiliza variables de entorno para configuración flexible:
 
