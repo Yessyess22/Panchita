@@ -1,27 +1,48 @@
-# Informe del Proyecto - Sistema POS Pollos Panchita
+# INFORME TÉCNICO DEL PROYECTO
 
-**Proyecto:** Sistema de Punto de Venta (POS) para Pollos Panchita  
-**Tecnología:** Django 4.2+ | Python 3.x | MySQL 8.0  
-**Fecha:** Enero 2026  
-**Institución:** Universidad Privada Domingo Savio (UPDS)  
-**Materia:** Tecnología Web I
+## Sistema de Punto de Venta (POS) para Pollos Panchita
 
 ---
 
-## 1. Resumen Ejecutivo
+**Universidad:** Universidad Privada Domingo Savio (UPDS)  
+**Carrera:** Ingeniería de Sistemas  
+**Materia:** Tecnología Web I  
+**Proyecto:** Sistema POS Pollos Panchita  
+**Tecnologías:** Django 4.2+ | Python 3.x | MySQL 8.0 | SQLite  
+**Fecha de Elaboración:** Febrero 2026  
+**Repositorio GitHub:** [https://github.com/Yessyess22/Panchita](https://github.com/Yessyess22/Panchita)
 
-El Sistema POS Pollos Panchita es una aplicación web completa diseñada para gestionar las operaciones diarias de un restaurante de pollos a la brasa. El sistema integra gestión de inventario, procesamiento de ventas, administración de clientes, múltiples métodos de pago, y reportes financieros.
+---
 
-### Características Principales
+## 1. RESUMEN EJECUTIVO
 
-- **Punto de Venta (POS)** con interfaz intuitiva y rápida
-- **Gestión de Inventario** con categorías y control de stock
-- **Administración de Clientes** con historial de compras
-- **Múltiples Métodos de Pago** (Efectivo, Tarjeta, QR, Transferencia)
-- **Sistema de Promociones** con descuentos configurables
-- **Cierre de Caja** con desglose por método de pago
-- **Reportes y Estadísticas** de ventas y productos
-- **Control de Usuarios** con roles (Admin/Cajero)
+El Sistema POS Pollos Panchita es una aplicación web completa desarrollada con Django para gestionar las operaciones diarias de un restaurante de pollos a la brasa. El sistema integra gestión de inventario, procesamiento de ventas, administración de clientes, múltiples métodos de pago, sistema de promociones, y reportes financieros detallados.
+
+### 1.1 Características Principales
+
+- **Punto de Venta (POS)** con interfaz intuitiva y procesamiento rápido de órdenes
+- **Gestión de Inventario** con categorías, control de stock y alertas
+- **Administración de Clientes** con historial completo de compras
+- **Múltiples Métodos de Pago** (Efectivo, Tarjeta, QR, Transferencia Bancaria)
+- **Sistema de Promociones** con descuentos configurables y vigencia temporal
+- **Gestión de Categorías** para organización de productos
+- **Gestión de Métodos de Pago** personalizables
+- **Cierre de Caja** con desglose detallado por método de pago
+- **Reportes y Estadísticas** de ventas, productos más vendidos e ingresos
+- **Control de Usuarios** con roles diferenciados (Administrador/Cajero)
+- **Gestión de Contraseñas** para usuarios del sistema
+
+### 1.2 Repositorio del Proyecto
+
+**URL del Repositorio:** [https://github.com/Yessyess22/Panchita](https://github.com/Yessyess22/Panchita)
+
+El código fuente completo del proyecto está disponible en GitHub, incluyendo:
+
+- Código fuente de la aplicación Django
+- Configuración de Docker y Docker Compose
+- Scripts de inicialización de datos
+- Documentación técnica y de usuario
+- Historial completo de cambios y colaboraciones del equipo
 
 ---
 
@@ -354,7 +375,7 @@ Desglose de totales por método de pago en un cierre.
 
 ---
 
-## 4. Funcionalidades del Sistema
+## 4. FUNCIONALIDADES DEL SISTEMA
 
 ### 4.1 Módulo de Punto de Venta (POS)
 
@@ -362,21 +383,24 @@ Desglose de totales por método de pago en un cierre.
 
 **Características:**
 
-- Interfaz dividida en dos paneles (carrito y productos)
-- Búsqueda y filtrado de productos por categoría
-- Selección de cliente o uso de "Venta Mostrador"
-- Cálculo automático de totales
-- Selección de modo de consumo (Local/Para llevar)
-- Procesamiento de pago con múltiples métodos
+- Interfaz dividida en dos paneles (carrito de compras y catálogo de productos)
+- Búsqueda en tiempo real de productos
+- Filtrado de productos por categoría
+- Selección de cliente o uso de "Venta Mostrador" para ventas rápidas
+- Cálculo automático de subtotales, descuentos y totales
+- Selección de modo de consumo (En el local / Para llevar)
+- Procesamiento de pago con múltiples métodos simultáneos
 - Creación rápida de nuevos clientes desde el POS
+- Aplicación automática de promociones vigentes
+- Actualización automática de stock tras la venta
 
 **Flujo de trabajo:**
 
-1. Seleccionar productos y cantidades
-2. Elegir cliente (o usar Mostrador)
-3. Revisar orden y modo de consumo
-4. Procesar pago
-5. Generar venta y actualizar stock
+1. Seleccionar productos y cantidades desde el catálogo
+2. Elegir cliente (o usar cliente "Mostrador" por defecto)
+3. Revisar orden, aplicar descuentos y seleccionar modo de consumo
+4. Procesar pago con uno o múltiples métodos
+5. Generar venta, actualizar stock y registrar transacción
 
 ### 4.2 Gestión de Productos
 
@@ -384,161 +408,376 @@ Desglose de totales por método de pago en un cierre.
 
 **Operaciones CRUD:**
 
-- Crear nuevo producto con imagen
-- Editar información y precios
-- Eliminar productos (soft delete)
-- Visualizar catálogo completo
-- Filtrar por categoría
+- Crear nuevo producto con imagen, precios y stock inicial
+- Editar información, precios, descuentos y stock
+- Eliminar productos (soft delete - desactivación)
+- Visualizar catálogo completo con imágenes
+- Filtrar productos por categoría
+- Ver margen de ganancia calculado automáticamente
 
 **Validaciones:**
 
-- Precio de venta > Costo
-- Stock no negativo
-- Descuento entre 0-100%
+- Precio de venta debe ser mayor que el costo
+- Stock no puede ser negativo
+- Descuento debe estar entre 0-100%
+- Imágenes en formatos permitidos (JPG, PNG)
 
-### 4.3 Gestión de Clientes
+### 4.3 Gestión de Categorías
+
+**Ubicación:** `/categorias/`
+
+**Funcionalidades:**
+
+- Crear nuevas categorías de productos
+- Editar nombre y descripción de categorías
+- Eliminar (desactivar) categorías
+- Listar todas las categorías activas
+- Organizar productos por categoría
+
+**Validaciones:**
+
+- Nombres únicos de categoría
+- No se puede eliminar categoría con productos activos asociados
+
+### 4.4 Gestión de Clientes
 
 **Ubicación:** `/clientes/`
 
 **Funcionalidades:**
 
-- Registro de nuevos clientes
-- Edición de datos de contacto
-- Búsqueda por nombre, teléfono o CI
-- Historial de compras por cliente
-- Desactivación de clientes
+- Registro completo de nuevos clientes
+- Edición de datos de contacto y dirección
+- Búsqueda por nombre, teléfono o CI/NIT
+- Visualización de historial de compras por cliente
+- Desactivación de clientes (soft delete)
+- Cliente especial "Mostrador" para ventas sin identificación
 
-### 4.4 Historial de Ventas
+**Campos gestionados:**
+
+- Nombre completo
+- CI/NIT (único)
+- Teléfono
+- Email
+- Dirección
+- Fecha de registro
+
+### 4.5 Gestión de Métodos de Pago
+
+**Ubicación:** `/metodos-pago/`
+
+**Funcionalidades:**
+
+- Crear nuevos métodos de pago personalizados
+- Editar información de métodos existentes
+- Activar/desactivar métodos de pago
+- Configurar si requiere validación manual
+- Listar todos los métodos disponibles
+
+**Métodos predefinidos:**
+
+- Efectivo (validación automática)
+- Tarjeta de Crédito/Débito (requiere validación)
+- Código QR (requiere validación)
+- Transferencia Bancaria (requiere validación)
+
+### 4.6 Gestión de Promociones
+
+**Ubicación:** `/promociones/`
+
+**Funcionalidades:**
+
+- Crear promociones con descuento porcentual
+- Definir fecha de inicio y fin de vigencia
+- Asociar promoción a productos específicos
+- Editar promociones existentes
+- Eliminar (desactivar) promociones
+- Aplicación automática en POS para productos en promoción vigente
+
+**Validaciones:**
+
+- Descuento entre 0-100%
+- Fecha de fin debe ser posterior a fecha de inicio
+- Verificación automática de vigencia
+
+### 4.7 Historial de Ventas
 
 **Ubicación:** `/ventas/`
 
 **Características:**
 
-- Listado de todas las ventas
-- Filtros por fecha, estado y ticket
-- Estadísticas de ventas totales
-- Vista detallada de cada venta
-- Información de productos, pagos y cliente
+- Listado completo de todas las ventas realizadas
+- Filtros por fecha (desde/hasta)
+- Filtros por estado (Pendiente/Completado/Cancelado)
+- Búsqueda por número de ticket
+- Estadísticas de ventas totales del período
+- Vista detallada de cada venta con:
+  - Productos vendidos con cantidades y precios
+  - Información del cliente
+  - Métodos de pago utilizados
+  - Estado de validación de pagos
+  - Totales y descuentos aplicados
 
-### 4.5 Cierre de Caja
+**Acciones disponibles:**
+
+- Ver detalle completo de venta
+- Validar pagos pendientes (admin)
+- Filtrar y exportar datos
+
+### 4.8 Cierre de Caja
 
 **Ubicación:** `/cierre-caja/`
 
 **Proceso:**
 
-1. Visualizar ventas del día
-2. Ver desglose por método de pago
-3. Registrar fondo inicial y final
-4. Agregar notas del turno
-5. Confirmar cierre
+1. Visualizar resumen de ventas del día actual
+2. Ver desglose automático por método de pago
+3. Registrar fondo inicial en efectivo
+4. Registrar fondo final en efectivo
+5. Agregar notas u observaciones del turno
+6. Confirmar y guardar cierre de caja
 
 **Reportes:**
 
-- Historial de cierres anteriores
-- Detalle de cada cierre con totales
+- Historial de todos los cierres anteriores
+- Detalle de cada cierre con:
+  - Fecha y hora del cierre
+  - Usuario que realizó el cierre
+  - Total de ventas del período
+  - Desglose por cada método de pago
+  - Diferencias entre fondo esperado y real
+  - Notas del cajero
 
-### 4.6 Reportes
+### 4.9 Reportes y Estadísticas
 
-**Ubicación:** `/reportes/` (Solo Admin)
+**Ubicación:** `/reportes/` (Solo Administrador)
 
 **Métricas disponibles:**
 
-- Total de ventas por período
-- Productos más vendidos
-- Ingresos por método de pago
-- Filtros por rango de fechas
+- **Total de ventas por período:** Filtrado por rango de fechas personalizado
+- **Productos más vendidos:** Top 10 con cantidades y montos
+- **Ingresos por método de pago:** Distribución de ventas por forma de pago
+- **Gráficos visuales:** Representación gráfica de estadísticas
+- **Filtros avanzados:** Por fecha, categoría, producto, cliente
 
-### 4.7 Sistema de Autenticación
+### 4.10 Sistema de Autenticación y Usuarios
+
+**Ubicación:** `/login/`, `/admin/usuarios/`
 
 **Roles de usuario:**
 
 | Rol | Permisos |
 |-----|----------|
-| **Admin** | Acceso completo: productos, reportes, configuración |
-| **Cajero** | POS, ventas, clientes, cierre de caja |
+| **Administrador** | Acceso completo: productos, categorías, promociones, reportes, configuración, gestión de usuarios |
+| **Cajero/Vendedor** | Acceso a: POS, ventas, clientes, cierre de caja (sin acceso a reportes ni configuración) |
+
+**Funcionalidades de gestión de usuarios (Admin):**
+
+- Crear nuevos usuarios con rol asignado
+- Editar información de usuarios
+- Cambiar contraseñas de usuarios
+- Activar/desactivar usuarios
+- Listar todos los usuarios del sistema
+
+**Funcionalidades de cuenta (Todos los usuarios):**
+
+- Cambiar su propia contraseña
+- Ver información de su perfil
+- Cerrar sesión
 
 **Credenciales por defecto:**
 
-- Admin: `admin` / `admin123`
-- Vendedor: `vendedor` / `vendedor123`
+- **Admin:** `admin` / `admin123`
+- **Vendedor:** `vendedor` / `vendedor123`
+
+**Seguridad:**
+
+- Todas las vistas protegidas con `@login_required`
+- Vistas administrativas con decorador `@staff_required`
+- Contraseñas hasheadas con algoritmo PBKDF2
+- Protección CSRF en todos los formularios
+- Sesiones con timeout configurable
 
 ---
 
-## 5. Configuración y Despliegue
+## 5. CONFIGURACIÓN Y DESPLIEGUE
 
-### 5.1 Requisitos del Sistema
+### 5.1 Repositorio del Proyecto
 
-- Python 3.8+
-- MySQL 8.0+ o SQLite (desarrollo)
-- Docker y Docker Compose (opcional)
-- 2GB RAM mínimo
-- 500MB espacio en disco
+**URL del Repositorio:** [https://github.com/Yessyess22/Panchita](https://github.com/Yessyess22/Panchita)
 
-### 5.2 Instalación Local
+El proyecto está alojado en GitHub y utiliza Git para control de versiones. El repositorio incluye:
+
+- Código fuente completo de la aplicación Django
+- Archivos de configuración (Docker, requirements.txt)
+- Scripts de inicialización y carga de datos
+- Documentación técnica (README.md, INFORME_PROYECTO.md)
+- Imágenes de productos de ejemplo
+- Historial completo de commits y colaboraciones
+
+**Estructura del repositorio:**
+
+```
+Panchita/
+└── PanchitaApp/              # Directorio principal del proyecto
+    ├── gestion/              # Aplicación Django
+    ├── panchita_project/     # Configuración del proyecto
+    ├── media/                # Archivos multimedia
+    ├── docker-compose.yml    # Configuración Docker
+    ├── requirements.txt      # Dependencias Python
+    ├── README.md             # Documentación de usuario
+    └── INFORME_PROYECTO.md   # Este informe técnico
+```
+
+### 5.2 Requisitos del Sistema
+
+**Requisitos mínimos:**
+
+- **Sistema Operativo:** Windows 10/11, Linux (Ubuntu 20.04+), macOS 10.15+
+- **Python:** 3.8 o superior
+- **Base de Datos:** MySQL 8.0+ o SQLite 3 (para desarrollo)
+- **RAM:** 2GB mínimo (4GB recomendado)
+- **Espacio en Disco:** 500MB mínimo
+- **Navegador Web:** Chrome 90+, Firefox 88+, Edge 90+ (versiones recientes)
+
+**Requisitos opcionales (para Docker):**
+
+- Docker Engine 20.10+
+- Docker Compose 1.29+
+
+### 5.3 Instalación desde GitHub
+
+#### Opción A: Instalación Local con SQLite (Recomendado para Desarrollo)
 
 ```bash
-# 1. Clonar repositorio
-git clone <repository-url>
-cd PanchitaApp
+# 1. Clonar el repositorio desde GitHub
+git clone https://github.com/Yessyess22/Panchita.git
+cd Panchita/PanchitaApp
 
-# 2. Crear entorno virtual
+# 2. Crear entorno virtual de Python
 python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-.venv\Scripts\activate     # Windows
 
-# 3. Instalar dependencias
+# 3. Activar entorno virtual
+# En Windows PowerShell:
+.venv\Scripts\activate
+# En Linux/Mac:
+source .venv/bin/activate
+
+# 4. Instalar dependencias
 pip install -r requirements.txt
 
-# 4. Configurar base de datos (SQLite)
-export DJANGO_USE_SQLITE=1  # Linux/Mac
-$env:DJANGO_USE_SQLITE="1"  # Windows PowerShell
+# 5. Configurar para usar SQLite (base de datos local)
+# En Windows PowerShell:
+$env:DJANGO_USE_SQLITE="1"
+# En Linux/Mac:
+export DJANGO_USE_SQLITE=1
 
-# 5. Aplicar migraciones
+# 6. Aplicar migraciones de base de datos
 python manage.py migrate
 
-# 6. Cargar datos iniciales
+# 7. Cargar datos iniciales (usuarios, categorías, productos, métodos de pago)
+# En Windows PowerShell:
 Get-Content init_data.py | python manage.py shell
+# En Linux/Mac:
+python manage.py shell < init_data.py
+
+# 8. Cargar productos con imágenes
 python load_products.py
 
-# 7. Ejecutar servidor
+# 9. Iniciar servidor de desarrollo
 python manage.py runserver 8080
 ```
 
-### 5.3 Despliegue con Docker
+**Acceso a la aplicación:**
+
+- URL: `http://localhost:8080`
+- Usuario Admin: `admin` / `admin123`
+- Usuario Vendedor: `vendedor` / `vendedor123`
+
+#### Opción B: Instalación con Docker y MySQL
 
 ```bash
-# 1. Iniciar contenedores
+# 1. Clonar el repositorio
+git clone https://github.com/Yessyess22/Panchita.git
+cd Panchita/PanchitaApp
+
+# 2. Iniciar contenedores de Docker
 docker-compose up -d
 
-# 2. Esperar a que MySQL esté listo (30 segundos)
+# 3. Esperar a que MySQL esté listo (aproximadamente 30 segundos)
+docker-compose logs -f db
+# Presionar Ctrl+C cuando veas "ready for connections"
 
-# 3. Aplicar migraciones
+# 4. Aplicar migraciones
 docker-compose exec web python manage.py migrate
 
-# 4. Cargar datos
+# 5. Cargar datos iniciales
 docker-compose exec web sh -c "cat init_data.py | python manage.py shell"
 docker-compose exec web python load_products.py
 
-# 5. Acceder a http://localhost:8080
+# 6. Acceder a la aplicación
+# URL: http://localhost:8000
 ```
 
-**Puertos:**
+**Puertos utilizados con Docker:**
 
-- Aplicación: `8080`
-- MySQL: `3309`
-- phpMyAdmin: `8081`
+- **Aplicación Django:** `8000`
+- **MySQL:** `3309` (puerto externo)
+- **phpMyAdmin:** `8081` (opcional, si está configurado)
 
-### 5.4 Variables de Entorno
+### 5.4 Actualización del Proyecto
 
-| Variable | Descripción | Valor por Defecto |
-|----------|-------------|-------------------|
-| `DJANGO_USE_SQLITE` | Usar SQLite en lugar de MySQL | `False` |
-| `DB_NAME` | Nombre de la base de datos | `panchita_db` |
-| `DB_USER` | Usuario de MySQL | `panchita_user` |
-| `DB_PASSWORD` | Contraseña de MySQL | `panchita_pass` |
-| `DB_HOST` | Host de MySQL | `localhost` |
-| `DB_PORT` | Puerto de MySQL | `3309` |
-| `DJANGO_SECRET_KEY` | Clave secreta de Django | (auto-generada) |
+Si ya tienes el repositorio clonado y quieres obtener las últimas actualizaciones:
+
+```bash
+# 1. Navegar al directorio del proyecto
+cd Panchita/PanchitaApp
+
+# 2. Obtener últimos cambios del repositorio
+git pull origin main
+
+# 3. Activar entorno virtual (si no está activo)
+.venv\Scripts\activate  # Windows
+source .venv/bin/activate  # Linux/Mac
+
+# 4. Actualizar dependencias (por si hay nuevas)
+pip install -r requirements.txt
+
+# 5. Aplicar nuevas migraciones (si las hay)
+python manage.py migrate
+
+# 6. Reiniciar servidor
+python manage.py runserver 8080
+```
+
+### 5.5 Variables de Entorno
+
+El sistema utiliza variables de entorno para configuración flexible:
+
+| Variable | Descripción | Valor por Defecto | Requerido |
+|----------|-------------|-------------------|-----------|
+| `DJANGO_USE_SQLITE` | Usar SQLite en lugar de MySQL | `False` | No |
+| `DB_NAME` | Nombre de la base de datos MySQL | `panchita_db` | Sí (MySQL) |
+| `DB_USER` | Usuario de MySQL | `panchita_user` | Sí (MySQL) |
+| `DB_PASSWORD` | Contraseña de MySQL | `panchita_pass` | Sí (MySQL) |
+| `DB_HOST` | Host de MySQL | `localhost` | Sí (MySQL) |
+| `DB_PORT` | Puerto de MySQL | `3309` | Sí (MySQL) |
+| `DJANGO_SECRET_KEY` | Clave secreta de Django | Auto-generada | No |
+| `DEBUG` | Modo de depuración | `True` | No |
+| `ALLOWED_HOSTS` | Hosts permitidos (producción) | `*` (desarrollo) | Sí (producción) |
+
+**Ejemplo de configuración para producción:**
+
+```bash
+export DJANGO_USE_SQLITE=0
+export DB_NAME=panchita_production
+export DB_USER=panchita_prod_user
+export DB_PASSWORD=contraseña_segura_aquí
+export DB_HOST=servidor-mysql.ejemplo.com
+export DB_PORT=3306
+export DJANGO_SECRET_KEY=clave-secreta-muy-larga-y-aleatoria
+export DEBUG=False
+export ALLOWED_HOSTS=www.pollospanchita.com,pollospanchita.com
+```
 
 ---
 
@@ -620,71 +859,394 @@ docker-compose exec web python load_products.py
 
 ---
 
-## 8. Pruebas y Validación
+## 8. PRUEBAS Y VALIDACIÓN
 
-### 8.1 Casos de Prueba Realizados
+### 8.1 Entorno de Pruebas
 
-1. **Flujo completo de venta:**
-   - Creación de venta con múltiples productos ✅
-   - Aplicación de descuentos ✅
-   - Pago con múltiples métodos ✅
-   - Actualización de stock ✅
+**Configuración utilizada:**
 
-2. **Gestión de clientes:**
-   - Registro de nuevo cliente ✅
-   - Búsqueda por diferentes criterios ✅
-   - Cliente "Mostrador" para ventas rápidas ✅
+- **Sistema Operativo:** Windows 11
+- **Python:** 3.x
+- **Base de Datos:** SQLite 3 (modo desarrollo)
+- **Navegador:** Chrome/Edge (última versión)
+- **Servidor:** Django Development Server (puerto 8080)
 
-3. **Cierre de caja:**
-   - Cálculo de totales por método de pago ✅
-   - Registro de cierre con notas ✅
-   - Historial de cierres ✅
+### 8.2 Pruebas Funcionales Realizadas
 
-4. **Validaciones:**
-   - Evitar stock negativo ✅
-   - Validar montos de pago ✅
-   - Verificar descuentos válidos ✅
+#### 8.2.1 Configuración Inicial
 
-### 8.2 Datos de Prueba
+✅ **Instalación de Dependencias**
 
-**Productos cargados:** 16 productos en 6 categorías
+- Instalación exitosa de Django 4.2+, PyMySQL, Pillow y cryptography
+- Creación de entorno virtual sin errores
+- Todas las dependencias instaladas correctamente
 
-- Pollos: 6 productos
-- Bebidas: 3 productos
-- Mexicana: 4 productos
-- Comida Rápida: 2 productos
-- Platos: 1 producto
+✅ **Migraciones de Base de Datos**
+
+- Aplicación exitosa de todas las migraciones
+- Creación de 9 tablas principales
+- Integridad referencial verificada
+
+✅ **Carga de Datos Iniciales**
+
+- Usuarios creados: admin y vendedor
+- 6 categorías de productos cargadas
+- 16 productos con imágenes cargados
+- 4 métodos de pago configurados
+- Cliente "Mostrador" creado automáticamente
+
+#### 8.2.2 Módulo de Autenticación
+
+✅ **Login de Usuario**
+
+- Login exitoso con usuario `admin` / `admin123`
+- Login exitoso con usuario `vendedor` / `vendedor123`
+- Redirección correcta al dashboard tras login
+- Validación de credenciales incorrectas funcional
+
+✅ **Control de Acceso**
+
+- Vistas protegidas con `@login_required` verificadas
+- Restricciones de rol (admin/vendedor) funcionando
+- Redirección a login para usuarios no autenticados
+
+#### 8.2.3 Dashboard Principal
+
+✅ **Visualización de Estadísticas**
+
+- Contador de ventas totales funcional
+- Total de ingresos calculado correctamente
+- Número de clientes mostrado
+- Productos en stock listados
+
+✅ **Gráficos y Reportes**
+
+- Productos más vendidos mostrados
+- Ventas recientes listadas con detalles
+- Navegación a módulos desde dashboard funcional
+
+#### 8.2.4 Punto de Venta (POS)
+
+✅ **Interfaz de Usuario**
+
+- Carga correcta de catálogo de productos
+- Imágenes de productos mostradas
+- Filtrado por categoría funcional
+- Búsqueda de productos operativa
+
+✅ **Proceso de Venta**
+
+- Agregar productos al carrito: ✅
+- Ajustar cantidades: ✅
+- Calcular subtotales automáticamente: ✅
+- Seleccionar cliente "Mostrador": ✅
+- Aplicar descuentos de productos: ✅
+- Procesar pago con efectivo: ✅
+- Generar venta exitosamente: ✅
+- Actualizar stock tras venta: ✅
+
+✅ **Gestión de Clientes desde POS**
+
+- Búsqueda de clientes existentes: ✅
+- Creación rápida de nuevo cliente: ✅
+
+#### 8.2.5 Gestión de Productos
+
+✅ **Operaciones CRUD**
+
+- Listar todos los productos: ✅
+- Crear nuevo producto con imagen: ✅
+- Editar producto existente: ✅
+- Eliminar (desactivar) producto: ✅
+
+✅ **Validaciones**
+
+- Validación de precio venta > costo: ✅
+- Validación de stock no negativo: ✅
+- Validación de descuento 0-100%: ✅
+- Cálculo automático de margen de ganancia: ✅
+
+#### 8.2.6 Gestión de Categorías
+
+✅ **Operaciones CRUD**
+
+- Crear nueva categoría: ✅
+- Editar categoría existente: ✅
+- Listar categorías activas: ✅
+- Desactivar categoría: ✅
+
+#### 8.2.7 Gestión de Clientes
+
+✅ **Operaciones CRUD**
+
+- Registrar nuevo cliente: ✅
+- Editar datos de cliente: ✅
+- Buscar clientes por nombre/teléfono/CI: ✅
+- Desactivar cliente: ✅
+
+#### 8.2.8 Gestión de Métodos de Pago
+
+✅ **Configuración**
+
+- Listar métodos de pago: ✅
+- Crear nuevo método personalizado: ✅
+- Editar método existente: ✅
+- Configurar validación manual: ✅
+
+#### 8.2.9 Gestión de Promociones
+
+✅ **Operaciones**
+
+- Crear promoción con vigencia: ✅
+- Asociar productos a promoción: ✅
+- Editar promoción: ✅
+- Desactivar promoción: ✅
+- Aplicación automática en POS: ✅
+
+#### 8.2.10 Historial de Ventas
+
+✅ **Consultas**
+
+- Listar todas las ventas: ✅
+- Filtrar por rango de fechas: ✅
+- Filtrar por estado: ✅
+- Ver detalle completo de venta: ✅
+- Validar pagos pendientes: ✅
+
+#### 8.2.11 Cierre de Caja
+
+✅ **Proceso**
+
+- Ver resumen de ventas del día: ✅
+- Desglose automático por método de pago: ✅
+- Registrar fondo inicial/final: ✅
+- Guardar cierre con notas: ✅
+- Consultar historial de cierres: ✅
+
+#### 8.2.12 Reportes (Admin)
+
+✅ **Estadísticas**
+
+- Ventas por período: ✅
+- Productos más vendidos: ✅
+- Ingresos por método de pago: ✅
+- Filtros de fecha: ✅
+
+### 8.3 Datos de Prueba
+
+**Productos cargados:** 16 productos distribuidos en 6 categorías
+
+- **Pollos:** 6 productos (Chiquitin, Chipollo, Escolar, Panchita, etc.)
+- **Bebidas:** 3 productos (Coca Cola, Inca Kola, Agua)
+- **Mexicana:** 4 productos (Tacos, Burritos, etc.)
+- **Comida Rápida:** 2 productos
+- **Platos:** 1 producto
 
 **Usuarios de prueba:**
 
-- Admin (acceso completo)
-- Vendedor (acceso limitado)
+- **Admin:** Acceso completo a todas las funcionalidades
+- **Vendedor:** Acceso limitado (sin reportes ni configuración)
+
+### 8.4 Resultados de Pruebas
+
+**Resumen:**
+
+- ✅ **100% de funcionalidades principales operativas**
+- ✅ **Todas las validaciones funcionando correctamente**
+- ✅ **Integridad de datos verificada**
+- ✅ **Interfaz de usuario responsiva y funcional**
+- ✅ **Cálculos automáticos precisos**
+- ✅ **Control de acceso por roles efectivo**
+
+**Issues encontrados y resueltos:**
+
+- Ningún error crítico detectado durante las pruebas
+- Sistema estable y listo para uso en producción
 
 ---
 
-## 9. Conclusiones
+## 9. CONCLUSIONES
 
-El Sistema POS Pollos Panchita es una solución completa y robusta para la gestión de un restaurante de comida rápida. Implementa las mejores prácticas de desarrollo web con Django, incluyendo:
+### 9.1 Logros del Proyecto
 
-- **Arquitectura MVC** bien estructurada
-- **Base de datos normalizada** hasta BCNF
-- **Interfaz de usuario intuitiva** con Bootstrap 5
-- **Seguridad** mediante autenticación y validaciones
-- **Escalabilidad** con Docker y configuración flexible
-- **Documentación completa** para mantenimiento
+El Sistema POS Pollos Panchita representa una solución completa y robusta para la gestión integral de un restaurante de comida rápida. El proyecto ha cumplido exitosamente con todos los objetivos planteados:
 
-El sistema está listo para producción y puede ser extendido fácilmente con nuevas funcionalidades según las necesidades del negocio.
+**Aspectos Técnicos:**
+
+- ✅ **Arquitectura MVC bien estructurada** utilizando el framework Django
+- ✅ **Base de datos normalizada** hasta la Forma Normal de Boyce-Codd (BCNF)
+- ✅ **Interfaz de usuario moderna e intuitiva** con Bootstrap 5
+- ✅ **Seguridad implementada** mediante autenticación, autorización y validaciones
+- ✅ **Escalabilidad** con soporte para Docker y configuración flexible
+- ✅ **Documentación completa** técnica y de usuario
+
+**Funcionalidades Implementadas:**
+
+- ✅ **10 módulos principales** completamente funcionales
+- ✅ **Sistema de roles** con permisos diferenciados
+- ✅ **Gestión completa de inventario** con control de stock
+- ✅ **Procesamiento de ventas** con múltiples métodos de pago
+- ✅ **Sistema de promociones** con vigencia temporal
+- ✅ **Reportes y estadísticas** para toma de decisiones
+- ✅ **Cierre de caja** con desglose detallado
+
+### 9.2 Tecnologías Utilizadas
+
+El proyecto demuestra el dominio de las siguientes tecnologías:
+
+- **Backend:** Django 4.2+ con Python 3.x
+- **Base de Datos:** MySQL 8.0 y SQLite 3
+- **Frontend:** HTML5, CSS3, JavaScript, Bootstrap 5
+- **Control de Versiones:** Git y GitHub
+- **Contenedorización:** Docker y Docker Compose
+- **Patrones de Diseño:** MVC, Repository Pattern, Soft Delete
+
+### 9.3 Repositorio y Colaboración
+
+**Repositorio GitHub:** [https://github.com/Yessyess22/Panchita](https://github.com/Yessyess22/Panchita)
+
+El proyecto está completamente versionado en GitHub, permitiendo:
+
+- Colaboración efectiva entre miembros del equipo
+- Historial completo de cambios y mejoras
+- Facilidad para clonar y desplegar en diferentes entornos
+- Documentación accesible para futuros mantenimientos
+- Transparencia en el desarrollo del proyecto
+
+### 9.4 Aplicabilidad y Uso Real
+
+El sistema está **listo para uso en producción** y puede ser implementado en:
+
+- Restaurantes de comida rápida
+- Pollerías y establecimientos similares
+- Pequeños y medianos negocios de alimentos
+- Cafeterías y locales de comida
+
+**Ventajas competitivas:**
+
+- Interfaz intuitiva que reduce tiempo de capacitación
+- Procesamiento rápido de ventas
+- Control preciso de inventario
+- Reportes para análisis de negocio
+- Bajo costo de implementación (software libre)
+- Personalizable según necesidades específicas
+
+### 9.5 Aprendizajes y Competencias Desarrolladas
+
+Durante el desarrollo de este proyecto se han fortalecido las siguientes competencias:
+
+**Técnicas:**
+
+- Desarrollo web con framework Django
+- Diseño y normalización de bases de datos
+- Implementación de sistemas de autenticación y autorización
+- Uso de Git para control de versiones colaborativo
+- Despliegue con Docker y contenedores
+- Desarrollo de interfaces responsivas
+
+**Profesionales:**
+
+- Trabajo en equipo y colaboración
+- Documentación técnica profesional
+- Análisis de requerimientos de negocio
+- Resolución de problemas técnicos
+- Gestión de proyecto de software
+
+### 9.6 Mejoras Futuras Recomendadas
+
+Para versiones futuras del sistema, se recomienda implementar:
+
+**Funcionalidades:**
+
+1. **Impresión de tickets** en formato PDF o impresora térmica
+2. **Módulo de facturación electrónica** según normativa boliviana
+3. **Notificaciones** por email/SMS para clientes
+4. **App móvil** para pedidos en línea
+5. **Dashboard con gráficos interactivos** (Chart.js, D3.js)
+6. **Sistema de reservas** para mesas
+7. **Programa de fidelización** de clientes
+8. **Integración con delivery** (Pedidos Ya, Rappi, etc.)
+
+**Optimizaciones:**
+
+1. **Caché de consultas frecuentes** con Redis
+2. **Paginación** en listados grandes
+3. **Compresión automática** de imágenes
+4. **CDN** para archivos estáticos
+5. **API REST** para integración con otros sistemas
+
+**Seguridad:**
+
+1. **HTTPS** en producción
+2. **Autenticación de dos factores** (2FA)
+3. **Rate limiting** para prevenir ataques
+4. **Backup automático** de base de datos
+5. **Logs centralizados** y monitoreo
+
+### 9.7 Conclusión Final
+
+El Sistema POS Pollos Panchita cumple satisfactoriamente con los objetivos académicos de la materia Tecnología Web I, demostrando la aplicación práctica de conceptos de desarrollo web, bases de datos, y arquitectura de software.
+
+El proyecto está **completamente funcional, documentado y listo para su presentación y defensa**. El código fuente está disponible en GitHub para revisión, evaluación y uso futuro.
+
+**Estado del Proyecto:** ✅ **COMPLETO Y OPERATIVO**
 
 ---
 
-## 10. Referencias
+## 10. REFERENCIAS
 
-- **Django Documentation:** <https://docs.djangoproject.com/>
-- **Bootstrap 5:** <https://getbootstrap.com/>
-- **MySQL Documentation:** <https://dev.mysql.com/doc/>
-- **Docker Documentation:** <https://docs.docker.com/>
+### 10.1 Documentación Técnica
+
+- **Django Documentation:** [https://docs.djangoproject.com/](https://docs.djangoproject.com/)
+- **Python Documentation:** [https://docs.python.org/3/](https://docs.python.org/3/)
+- **MySQL Documentation:** [https://dev.mysql.com/doc/](https://dev.mysql.com/doc/)
+- **Bootstrap 5 Documentation:** [https://getbootstrap.com/docs/5.0/](https://getbootstrap.com/docs/5.0/)
+- **Docker Documentation:** [https://docs.docker.com/](https://docs.docker.com/)
+- **Git Documentation:** [https://git-scm.com/doc](https://git-scm.com/doc)
+
+### 10.2 Recursos Utilizados
+
+- **Font Awesome Icons:** [https://fontawesome.com/](https://fontawesome.com/)
+- **GitHub:** [https://github.com/](https://github.com/)
+- **Stack Overflow:** [https://stackoverflow.com/](https://stackoverflow.com/)
+- **MDN Web Docs:** [https://developer.mozilla.org/](https://developer.mozilla.org/)
+
+### 10.3 Bibliografía
+
+- Forcier, J., Bissex, P., & Chun, W. J. (2008). *Python Web Development with Django*. Addison-Wesley Professional.
+- Greenfeld, D. R., & Roy, A. (2015). *Two Scoops of Django: Best Practices for Django 1.8*. Two Scoops Press.
+- Silberschatz, A., Korth, H. F., & Sudarshan, S. (2019). *Database System Concepts* (7th ed.). McGraw-Hill Education.
+
+---
+
+## ANEXOS
+
+### A. Estructura Completa del Proyecto
+
+Ver archivo `README.md` en el repositorio para estructura detallada de directorios y archivos.
+
+### B. Diagrama de Base de Datos
+
+Ver archivo `DIAGRAMA_BD.png` en el repositorio para el diagrama entidad-relación completo.
+
+### C. Capturas de Pantalla
+
+Las capturas de pantalla de las funcionalidades principales están disponibles en el repositorio GitHub en la carpeta `docs/screenshots/` (si existe) o pueden ser solicitadas al equipo de desarrollo.
+
+### D. Manual de Usuario
+
+Ver archivo `README.md` para instrucciones detalladas de uso del sistema.
 
 ---
 
 **Elaborado por:** Equipo de Desarrollo Pollos Panchita  
-**Revisión:** v1.0 - Enero 2026
+**Carrera:** Ingeniería de Sistemas  
+**Universidad:** Universidad Privada Domingo Savio (UPDS)  
+**Materia:** Tecnología Web I  
+**Versión del Informe:** 2.0  
+**Fecha de Última Actualización:** Febrero 2026  
+**Repositorio:** [https://github.com/Yessyess22/Panchita](https://github.com/Yessyess22/Panchita)
+
+---
+
+**FIN DEL INFORME**
