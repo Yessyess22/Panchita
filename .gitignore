@@ -1,33 +1,165 @@
-# Python
+# ===== Python =====
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-.Python
+*.egg
+*.egg-info/
+.installed.cfg
+*.egg-info
+dist/
+build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.manifest
+*.spec
+
+# ===== Virtual Environments =====
 env/
 venv/
 .venv/
 .venv_mac/
-*.egg-info/
-dist/
-build/
+ENV/
+env.bak/
+venv.bak/
+pyvenv.cfg
 
-# Django
+# ===== Django =====
 *.log
 local_settings.py
 db.sqlite3
-backups/
 db.sqlite3-journal
+backups/
 staticfiles/
-# media/  → descomentado para subir imágenes de productos a GitHub
+static_root/
+.static_storage/
+*.pot
+*.pyc
 
-# Environments
+# Media (comentado para subir imágenes de productos)
+# media/
+
+# ===== Django Migrations (opcional - descomentar si no quieres versionar migraciones) =====
+# **/migrations/*.py
+# !**/migrations/__init__.py
+
+# ===== Environments & Secrets =====
 .env
+.env.*
+*.env
+!.env.example
+.envrc
+secrets.json
+*.pem
+*.key
+*.cert
 
-# Docker
+# ===== Docker =====
 .docker_data/
 mysql_data/
+mysql_data_django/
+docker-compose.override.yml
+.dockerignore.local
 
-# IDE
+# ===== Database Dumps & Backups =====
+*.sql
+*.dump
+*.bak
+backups/
+db_backups/
+
+# ===== IDE & Editors =====
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+.project
+.pydevproject
+.settings/
+*.tmproj
+*.tmproject
+tmtags
+
+# ===== Testing & Coverage =====
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.pytest_cache/
+.hypothesis/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.cache
+
+# ===== Jupyter Notebook =====
+.ipynb_checkpoints
+*.ipynb
+
+# ===== Documentation =====
+docs/_build/
+site/
+
+# ===== System Files =====
+.DS_Store
+Thumbs.db
+desktop.ini
+*.tmp
+*.temp
+
+# ===== Logs =====
+*.log
+logs/
+*.log.*
+
+# ===== Compiled Files =====
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# ===== Package Files =====
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# ===== Node (si usas npm para frontend) =====
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# ===== Celery =====
+celerybeat-schedule
+celerybeat.pid
+
+# ===== Misc =====
+*.bak
+*.swp
+*.swo
+*~
