@@ -1,6 +1,8 @@
 from django.db import models
+from django.db.models import Q
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from decimal import Decimal, ROUND_HALF_UP
 
@@ -146,6 +148,11 @@ class Promocion(models.Model):
             return True
         return False
 
+    def clean(self):
+        """Valida que fecha_fin sea posterior a fecha_inicio."""
+        if self.fecha_inicio and self.fecha_fin and self.fecha_fin <= self.fecha_inicio:
+            raise ValidationError({'fecha_fin': 'La fecha fin debe ser posterior a la fecha de inicio.'})
+
 class Venta(models.Model):
     ESTADO_CHOICES = [
         ('pendiente', 'Pendiente'),
@@ -193,7 +200,14 @@ class Venta(models.Model):
     
     class Meta:
         ordering = ['-fecha']
-    
+        constraints = [
+            models.UniqueConstraint(
+                fields=['numero_factura'],
+                condition=Q(tipo_documento='factura'),
+                name='unique_numero_factura_factura',
+            ),
+        ]
+
     def __str__(self):
         return f"Venta #{self.id} - {self.cliente}"
     

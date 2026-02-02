@@ -40,7 +40,11 @@ class PromocionAdmin(admin.ModelAdmin):
     list_filter = ('activo', 'fecha_inicio', 'fecha_fin')
     search_fields = ('nombre', 'descripcion')
     filter_horizontal = ('productos',)
-    
+
+    def save_model(self, request, obj, form, change):
+        obj.full_clean()  # Valida fecha_fin > fecha_inicio
+        super().save_model(request, obj, form, change)
+
     def esta_vigente(self, obj):
         return obj.esta_vigente()
     esta_vigente.boolean = True

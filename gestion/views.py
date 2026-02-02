@@ -3,11 +3,23 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth.decorators import login_required
+from django.db import transaction, IntegrityError
+from django.core.validators import validate_email as django_validate_email
+from django.core.exceptions import ValidationError as DjangoValidationError
 from .decorators import staff_required
 from .models import (
     Producto, Categoria, Cliente, Venta, DetalleVenta,
     MetodoPago, Promocion, Pago, CierreCaja, CierreCajaDetallePago
 )
+
+# Límites de longitud para validación en vistas (coinciden con max_length del modelo)
+MAX_LENGTH_NOMBRE_PRODUCTO = 100
+MAX_LENGTH_DESCRIPCION_PRODUCTO = 2000
+MAX_LENGTH_NOMBRE_CLIENTE = 150
+MAX_LENGTH_CI_NIT = 20
+MAX_LENGTH_TELEFONO = 20
+MAX_SIZE_IMAGEN_BYTES = 5 * 1024 * 1024  # 5 MB
+ALLOWED_IMAGE_CONTENT_TYPES = {'image/jpeg', 'image/png', 'image/gif', 'image/webp'}
 
 def _ensure_default_user(username, password, email, is_staff, is_superuser=False):
     """Crea o actualiza el usuario por defecto si no existe o la contraseña no coincide."""
@@ -247,14 +259,21 @@ def admin_usuarios_crear(request):
             rol = 'vendedor'
 
         is_staff = rol == 'administrador'
-        user = User.objects.create_user(
-            username=username,
-            password=password,
-            email=email or f'{username}@panchita.com',
-            is_staff=is_staff,
-            is_superuser=is_staff,
-            is_active=True,
-        )
+        try:
+            user = User.objects.create_user(
+                username=username,
+                password=password,
+                email=email or f'{username}@panchita.com',
+                is_staff=is_staff,
+                is_superuser=is_staff,
+                is_active=True,
+            )
+        except IntegrityError:
+            messages.error(request, f'Ya existe un usuario con el nombre "{username}". Intente de nuevo.')
+            return render(request, 'gestion/admin_usuarios_crear.html', {
+                'active': 'admin',
+                'form_data': request.POST,
+            })
         rol_display = 'Administrador' if is_staff else 'Vendedor'
         messages.success(request, f'Usuario "{username}" ({rol_display}) creado correctamente.')
         return redirect('admin_usuarios_index')
@@ -472,6 +491,37 @@ def cliente_editar(request, pk):
                 'active': 'clientes',
                 'form_data': request.POST,
             })
+        if len(nombre) > MAX_LENGTH_NOMBRE_CLIENTE:
+            messages.error(request, f'El nombre no puede superar {MAX_LENGTH_NOMBRE_CLIENTE} caracteres.')
+            return render(request, 'gestion/cliente_form.html', {
+                'cliente': cliente,
+                'active': 'clientes',
+                'form_data': request.POST,
+            })
+        if ci_nit and len(ci_nit) > MAX_LENGTH_CI_NIT:
+            messages.error(request, f'El CI/NIT no puede superar {MAX_LENGTH_CI_NIT} caracteres.')
+            return render(request, 'gestion/cliente_form.html', {
+                'cliente': cliente,
+                'active': 'clientes',
+                'form_data': request.POST,
+            })
+        if telefono and len(telefono) > MAX_LENGTH_TELEFONO:
+            messages.error(request, f'El teléfono no puede superar {MAX_LENGTH_TELEFONO} caracteres.')
+            return render(request, 'gestion/cliente_form.html', {
+                'cliente': cliente,
+                'active': 'clientes',
+                'form_data': request.POST,
+            })
+        if email:
+            try:
+                django_validate_email(email)
+            except DjangoValidationError:
+                messages.error(request, 'El correo electrónico no tiene un formato válido.')
+                return render(request, 'gestion/cliente_form.html', {
+                    'cliente': cliente,
+                    'active': 'clientes',
+                    'form_data': request.POST,
+                })
 
         if ci_nit and Cliente.objects.exclude(pk=pk).filter(ci_nit=ci_nit).exists():
             messages.error(request, 'Ya existe otro cliente con ese CI/NIT.')
@@ -486,7 +536,15 @@ def cliente_editar(request, pk):
         cliente.telefono = telefono
         cliente.email = email
         cliente.direccion = direccion
-        cliente.save()
+        try:
+            cliente.save()
+        except IntegrityError:
+            messages.error(request, 'Ya existe otro cliente con ese CI/NIT. Intente de nuevo.')
+            return render(request, 'gestion/cliente_form.html', {
+                'cliente': cliente,
+                'active': 'clientes',
+                'form_data': request.POST,
+            })
 
         messages.success(request, f'Cliente "{cliente.nombre_completo}" actualizado correctamente.')
         return redirect('cliente_index')
@@ -551,6 +609,48 @@ def producto_crear(request):
                     'active': 'productos',
                     'form_data': request.POST
                 })
+            if len(nombre) > MAX_LENGTH_NOMBRE_PRODUCTO:
+                messages.error(request, f'El nombre no puede superar {MAX_LENGTH_NOMBRE_PRODUCTO} caracteres.')
+                categorias = Categoria.objects.filter(activo=True)
+                return render(request, 'gestion/producto_form.html', {
+                    'categorias': categorias, 
+                    'active': 'productos',
+                    'form_data': request.POST
+                })
+            if descripcion and len(descripcion) > MAX_LENGTH_DESCRIPCION_PRODUCTO:
+                messages.error(request, f'La descripción no puede superar {MAX_LENGTH_DESCRIPCION_PRODUCTO} caracteres.')
+                categorias = Categoria.objects.filter(activo=True)
+                return render(request, 'gestion/producto_form.html', {
+                    'categorias': categorias, 
+                    'active': 'productos',
+                    'form_data': request.POST
+                })
+            if Producto.objects.filter(nombre__iexact=nombre).exists():
+                messages.error(request, f'Ya existe un producto con el nombre "{nombre}".')
+                categorias = Categoria.objects.filter(activo=True)
+                return render(request, 'gestion/producto_form.html', {
+                    'categorias': categorias, 
+                    'active': 'productos',
+                    'form_data': request.POST
+                })
+            if imagen:
+                if imagen.size > MAX_SIZE_IMAGEN_BYTES:
+                    messages.error(request, f'La imagen no puede superar {MAX_SIZE_IMAGEN_BYTES // (1024*1024)} MB.')
+                    categorias = Categoria.objects.filter(activo=True)
+                    return render(request, 'gestion/producto_form.html', {
+                        'categorias': categorias, 
+                        'active': 'productos',
+                        'form_data': request.POST
+                    })
+                content_type = getattr(imagen, 'content_type', None) or ''
+                if content_type not in ALLOWED_IMAGE_CONTENT_TYPES:
+                    messages.error(request, 'Formato de imagen no permitido. Use JPEG, PNG, GIF o WebP.')
+                    categorias = Categoria.objects.filter(activo=True)
+                    return render(request, 'gestion/producto_form.html', {
+                        'categorias': categorias, 
+                        'active': 'productos',
+                        'form_data': request.POST
+                    })
             
             if not categoria_id:
                 messages.error(request, 'Debe seleccionar una categoría.')
@@ -677,6 +777,53 @@ def producto_editar(request, pk):
                 'active': 'productos',
                 'form_data': request.POST,
             })
+        if len(nombre) > MAX_LENGTH_NOMBRE_PRODUCTO:
+            messages.error(request, f'El nombre no puede superar {MAX_LENGTH_NOMBRE_PRODUCTO} caracteres.')
+            categorias = Categoria.objects.filter(activo=True)
+            return render(request, 'gestion/producto_form.html', {
+                'producto': producto,
+                'categorias': categorias,
+                'active': 'productos',
+                'form_data': request.POST,
+            })
+        if descripcion and len(descripcion) > MAX_LENGTH_DESCRIPCION_PRODUCTO:
+            messages.error(request, f'La descripción no puede superar {MAX_LENGTH_DESCRIPCION_PRODUCTO} caracteres.')
+            categorias = Categoria.objects.filter(activo=True)
+            return render(request, 'gestion/producto_form.html', {
+                'producto': producto,
+                'categorias': categorias,
+                'active': 'productos',
+                'form_data': request.POST,
+            })
+        if Producto.objects.filter(nombre__iexact=nombre).exclude(pk=pk).exists():
+            messages.error(request, f'Ya existe otro producto con el nombre "{nombre}".')
+            categorias = Categoria.objects.filter(activo=True)
+            return render(request, 'gestion/producto_form.html', {
+                'producto': producto,
+                'categorias': categorias,
+                'active': 'productos',
+                'form_data': request.POST,
+            })
+        if nueva_imagen:
+            if nueva_imagen.size > MAX_SIZE_IMAGEN_BYTES:
+                messages.error(request, f'La imagen no puede superar {MAX_SIZE_IMAGEN_BYTES // (1024*1024)} MB.')
+                categorias = Categoria.objects.filter(activo=True)
+                return render(request, 'gestion/producto_form.html', {
+                    'producto': producto,
+                    'categorias': categorias,
+                    'active': 'productos',
+                    'form_data': request.POST,
+                })
+            content_type = getattr(nueva_imagen, 'content_type', None) or ''
+            if content_type not in ALLOWED_IMAGE_CONTENT_TYPES:
+                messages.error(request, 'Formato de imagen no permitido. Use JPEG, PNG, GIF o WebP.')
+                categorias = Categoria.objects.filter(activo=True)
+                return render(request, 'gestion/producto_form.html', {
+                    'producto': producto,
+                    'categorias': categorias,
+                    'active': 'productos',
+                    'form_data': request.POST,
+                })
         if not categoria_id:
             messages.error(request, 'Debe seleccionar una categoría.')
             categorias = Categoria.objects.filter(activo=True)
@@ -780,7 +927,14 @@ def categoria_crear(request):
                 'active': 'categorias',
                 'form_data': request.POST,
             })
-        Categoria.objects.create(nombre=nombre, descripcion=descripcion)
+        try:
+            Categoria.objects.create(nombre=nombre, descripcion=descripcion)
+        except IntegrityError:
+            messages.error(request, f'Ya existe una categoría con el nombre "{nombre}". Intente de nuevo.')
+            return render(request, 'gestion/categoria_form.html', {
+                'active': 'categorias',
+                'form_data': request.POST,
+            })
         messages.success(request, f'Categoría "{nombre}" creada correctamente.')
         return redirect('categoria_index')
     return render(request, 'gestion/categoria_form.html', {'active': 'categorias'})
@@ -810,7 +964,15 @@ def categoria_editar(request, pk):
             })
         categoria.nombre = nombre
         categoria.descripcion = descripcion
-        categoria.save()
+        try:
+            categoria.save()
+        except IntegrityError:
+            messages.error(request, f'Ya existe otra categoría con el nombre "{nombre}". Intente de nuevo.')
+            return render(request, 'gestion/categoria_form.html', {
+                'categoria': categoria,
+                'active': 'categorias',
+                'form_data': request.POST,
+            })
         messages.success(request, f'Categoría "{nombre}" actualizada correctamente.')
         return redirect('categoria_index')
     return render(request, 'gestion/categoria_form.html', {
@@ -877,12 +1039,21 @@ def metodopago_crear(request):
                 'tipo_actual': tipo,
                 'requiere_validacion_checked': requiere_validacion,
             })
-        MetodoPago.objects.create(
-            nombre=nombre,
-            tipo=tipo,
-            descripcion=descripcion,
-            requiere_validacion=requiere_validacion,
-        )
+        try:
+            MetodoPago.objects.create(
+                nombre=nombre,
+                tipo=tipo,
+                descripcion=descripcion,
+                requiere_validacion=requiere_validacion,
+            )
+        except IntegrityError:
+            messages.error(request, f'Ya existe un método de pago con el nombre "{nombre}". Intente de nuevo.')
+            return render(request, 'gestion/metodopago_form.html', {
+                'active': 'metodos_pago',
+                'form_data': request.POST,
+                'tipo_actual': tipo,
+                'requiere_validacion_checked': requiere_validacion,
+            })
         messages.success(request, f'Método de pago "{nombre}" creado correctamente.')
         return redirect('metodopago_index')
     return render(request, 'gestion/metodopago_form.html', {
@@ -926,7 +1097,17 @@ def metodopago_editar(request, pk):
         metodo.tipo = tipo
         metodo.descripcion = descripcion
         metodo.requiere_validacion = requiere_validacion
-        metodo.save()
+        try:
+            metodo.save()
+        except IntegrityError:
+            messages.error(request, f'Ya existe otro método de pago con el nombre "{nombre}". Intente de nuevo.')
+            return render(request, 'gestion/metodopago_form.html', {
+                'metodo': metodo,
+                'active': 'metodos_pago',
+                'form_data': request.POST,
+                'tipo_actual': tipo,
+                'requiere_validacion_checked': requiere_validacion,
+            })
         messages.success(request, f'Método de pago "{nombre}" actualizado correctamente.')
         return redirect('metodopago_index')
     return render(request, 'gestion/metodopago_form.html', {
@@ -1028,9 +1209,17 @@ def promocion_crear(request):
                 'form_data': request.POST,
                 'productos_seleccionados': _productos_seleccionados(),
             })
+        if Promocion.objects.filter(nombre__iexact=nombre).exists():
+            messages.error(request, f'Ya existe una promoción con el nombre "{nombre}".')
+            return render(request, 'gestion/promocion_form.html', {
+                'productos': productos,
+                'active': 'promociones',
+                'form_data': request.POST,
+                'productos_seleccionados': _productos_seleccionados(),
+            })
 
         from decimal import Decimal
-        promo = Promocion.objects.create(
+        promo = Promocion(
             nombre=nombre,
             descripcion=descripcion,
             descuento_porcentaje=Decimal(str(descuento)),
@@ -1038,6 +1227,20 @@ def promocion_crear(request):
             fecha_fin=fecha_fin,
             activo=activo,
         )
+        try:
+            promo.full_clean()
+        except DjangoValidationError as e:
+            if 'fecha_fin' in (e.message_dict or {}):
+                messages.error(request, 'La fecha fin debe ser posterior a la fecha de inicio.')
+            else:
+                messages.error(request, str(e))
+            return render(request, 'gestion/promocion_form.html', {
+                'productos': productos,
+                'active': 'promociones',
+                'form_data': request.POST,
+                'productos_seleccionados': _productos_seleccionados(),
+            })
+        promo.save()
         if producto_ids:
             promo.productos.set(Producto.objects.filter(pk__in=producto_ids, activo=True))
         messages.success(request, f'Promoción "{nombre}" creada correctamente.')
@@ -1105,6 +1308,15 @@ def promocion_editar(request, pk):
                 'form_data': request.POST,
                 'productos_seleccionados': _productos_seleccionados(),
             })
+        if Promocion.objects.filter(nombre__iexact=nombre).exclude(pk=pk).exists():
+            messages.error(request, f'Ya existe otra promoción con el nombre "{nombre}".')
+            return render(request, 'gestion/promocion_form.html', {
+                'promocion': promo,
+                'productos': productos,
+                'active': 'promociones',
+                'form_data': request.POST,
+                'productos_seleccionados': _productos_seleccionados(),
+            })
 
         from decimal import Decimal
         promo.nombre = nombre
@@ -1113,6 +1325,20 @@ def promocion_editar(request, pk):
         promo.fecha_inicio = fecha_inicio
         promo.fecha_fin = fecha_fin
         promo.activo = activo
+        try:
+            promo.full_clean()
+        except DjangoValidationError as e:
+            if 'fecha_fin' in (e.message_dict or {}):
+                messages.error(request, 'La fecha fin debe ser posterior a la fecha de inicio.')
+            else:
+                messages.error(request, str(e))
+            return render(request, 'gestion/promocion_form.html', {
+                'promocion': promo,
+                'productos': productos,
+                'active': 'promociones',
+                'form_data': request.POST,
+                'productos_seleccionados': _productos_seleccionados(),
+            })
         promo.save()
         if producto_ids is not None:
             promo.productos.set(Producto.objects.filter(pk__in=producto_ids, activo=True))
@@ -1176,26 +1402,29 @@ def pos_procesar_pago(request):
                         'success': False,
                         'error': 'Para factura debe seleccionar un cliente con NIT/CI. No puede usar Mostrador.'
                     }, status=400)
-            
-            # Create sale with explicit timezone-aware datetime
+
             from django.utils import timezone
             from django.db.models import Max
-            venta = Venta.objects.create(
-                cliente=cliente,
-                usuario=request.user,
-                modo_consumo=modo_consumo,
-                tipo_documento=tipo_documento
-            )
-            if tipo_documento == 'factura':
-                ultimo_num = Venta.objects.filter(tipo_documento='factura').aggregate(
-                    m=Max('numero_factura')
-                )['m'] or 0
-                venta.numero_factura = ultimo_num + 1
-                venta.save()
-            # Asegurar que la fecha se guarde correctamente
-            if not venta.fecha:
-                venta.fecha = timezone.now()
-                venta.save()
+            from decimal import Decimal, InvalidOperation
+
+            with transaction.atomic():
+                # Create sale with explicit timezone-aware datetime
+                venta = Venta.objects.create(
+                    cliente=cliente,
+                    usuario=request.user,
+                    modo_consumo=modo_consumo,
+                    tipo_documento=tipo_documento
+                )
+                if tipo_documento == 'factura':
+                    ultimo_num = Venta.objects.filter(tipo_documento='factura').aggregate(
+                        m=Max('numero_factura')
+                    )['m'] or 0
+                    venta.numero_factura = ultimo_num + 1
+                    venta.save()
+                # Asegurar que la fecha se guarde correctamente
+                if not venta.fecha:
+                    venta.fecha = timezone.now()
+                    venta.save()
             
             # Add sale details
             for item in items:
@@ -1253,25 +1482,36 @@ def pos_procesar_pago(request):
             
             # Calculate totals
             venta.calcular_totales()
-            
-            # Create payment
-            pago = Pago.objects.create(
-                venta=venta,
-                metodo_pago=metodo_pago,
-                monto=venta.total
-            )
-            
+
+            # Create payment: validar con full_clean() antes de guardar (suma pagos <= total)
+            pago = Pago(venta=venta, metodo_pago=metodo_pago, monto=venta.total)
+            try:
+                pago.full_clean()
+            except DjangoValidationError as e:
+                err_msg = str(e)
+                if hasattr(e, 'message_dict') and e.message_dict:
+                    msgs = e.message_dict.get('__all__', list(e.message_dict.values()))
+                    if msgs:
+                        err_msg = msgs[0][0] if isinstance(msgs[0], (list, tuple)) else str(msgs[0])
+                return JsonResponse({'success': False, 'error': err_msg}, status=400)
+            pago.save()
+
             # Auto-validate if method doesn't require validation
             if not metodo_pago.requiere_validacion:
                 pago.validar_pago(request.user)
-            
+
             return JsonResponse({
                 'success': True,
                 'venta_id': venta.id,
                 'total': str(venta.total),
                 'message': 'Venta procesada exitosamente'
             })
-            
+
+        except IntegrityError:
+            return JsonResponse({
+                'success': False,
+                'error': 'Error de integridad (por ejemplo, número de factura duplicado). Intente de nuevo.'
+            }, status=409)
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
     
@@ -1322,17 +1562,31 @@ def pos_crear_cliente(request):
 
         if not nombre:
             return JsonResponse({'success': False, 'error': 'El nombre del cliente es obligatorio.'}, status=400)
+        if len(nombre) > MAX_LENGTH_NOMBRE_CLIENTE:
+            return JsonResponse({'success': False, 'error': f'El nombre no puede superar {MAX_LENGTH_NOMBRE_CLIENTE} caracteres.'}, status=400)
+        if ci_nit and len(ci_nit) > MAX_LENGTH_CI_NIT:
+            return JsonResponse({'success': False, 'error': f'El CI/NIT no puede superar {MAX_LENGTH_CI_NIT} caracteres.'}, status=400)
+        if telefono and len(telefono) > MAX_LENGTH_TELEFONO:
+            return JsonResponse({'success': False, 'error': f'El teléfono no puede superar {MAX_LENGTH_TELEFONO} caracteres.'}, status=400)
+        if email:
+            try:
+                django_validate_email(email)
+            except DjangoValidationError:
+                return JsonResponse({'success': False, 'error': 'El correo electrónico no tiene un formato válido.'}, status=400)
 
         if ci_nit and Cliente.objects.filter(ci_nit=ci_nit).exists():
             return JsonResponse({'success': False, 'error': 'Ya existe un cliente con ese CI/NIT.'}, status=400)
 
-        cliente = Cliente.objects.create(
-            nombre_completo=nombre,
-            telefono=telefono or None,
-            ci_nit=ci_nit,
-            email=email,
-            activo=True,
-        )
+        try:
+            cliente = Cliente.objects.create(
+                nombre_completo=nombre,
+                telefono=telefono or None,
+                ci_nit=ci_nit,
+                email=email,
+                activo=True,
+            )
+        except IntegrityError:
+            return JsonResponse({'success': False, 'error': 'Ya existe un cliente con ese CI/NIT. Intente de nuevo.'}, status=409)
         return JsonResponse({
             'success': True,
             'cliente': {'id': cliente.id, 'nombre_completo': cliente.nombre_completo},
@@ -1533,6 +1787,21 @@ def cierre_caja_nuevo(request):
             totales_por_metodo[p['metodo_pago__nombre']] = p['total']
     
     if request.method == 'POST':
+        # Un cierre por usuario por día (evitar duplicados)
+        if CierreCaja.objects.filter(usuario=request.user, fecha_cierre__date=hoy).exists():
+            messages.error(
+                request,
+                'Ya tiene un cierre de caja registrado para hoy. No puede registrar otro.'
+            )
+            return render(request, 'gestion/cierre_caja_nuevo.html', {
+                'total_ventas': total_ventas,
+                'num_ventas': num_ventas,
+                'hoy': hoy,
+                'totales_por_metodo': totales_por_metodo,
+                'metodos_pago': metodos_pago,
+                'active': 'cierre_caja'
+            })
+
         fondo_inicial_str = (request.POST.get('fondo_inicial') or '').strip()
         fondo_final_str = (request.POST.get('fondo_final') or '').strip()
         notas = (request.POST.get('notas') or '').strip()
