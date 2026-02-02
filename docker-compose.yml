@@ -2,7 +2,7 @@ services:
   web:
     build: .
     container_name: panchita_web
-    command: sh -c "chmod -R 755 /app/media /app/backups && python manage.py migrate && python manage.py collectstatic --noinput && python manage.py runserver 0.0.0.0:8000"
+    command: sh -c "mkdir -p /app/media/productos /app/backups /app/staticfiles && chmod -R 755 /app/media /app/backups /app/staticfiles && python manage.py migrate && python manage.py collectstatic --noinput && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/app
       - static_volume:/app/staticfiles
