@@ -90,7 +90,8 @@ class POS {
             btnVentaMostrador.addEventListener('click', () => {
                 const tipoDoc = document.querySelector('input[name="tipo_documento"]:checked');
                 if (tipoDoc && tipoDoc.value === 'factura') {
-                    alert('Para factura debe seleccionar un cliente con NIT/CI. No puede usar Mostrador.');
+                    if (typeof showAlertModal === 'function') showAlertModal('Para factura debe seleccionar un cliente con NIT/CI. No puede usar Mostrador.', 'warning');
+                    else alert('Para factura debe seleccionar un cliente con NIT/CI. No puede usar Mostrador.');
                     return;
                 }
                 document.getElementById('cliente_id_hidden').value = window.posData.clienteMostradorId;
@@ -246,7 +247,8 @@ class POS {
 
     processPayment() {
         if (this.cart.length === 0) {
-            alert('El carrito está vacío');
+            if (typeof showAlertModal === 'function') showAlertModal('El carrito está vacío', 'warning');
+            else alert('El carrito está vacío');
             return;
         }
 
@@ -361,7 +363,8 @@ class POS {
     async saveNewCliente() {
         const nombre = (document.getElementById('nuevo_cliente_nombre') || {}).value.trim();
         if (!nombre) {
-            alert('El nombre del cliente es obligatorio.');
+            if (typeof showAlertModal === 'function') showAlertModal('El nombre del cliente es obligatorio.', 'error');
+            else alert('El nombre del cliente es obligatorio.');
             return;
         }
 
@@ -402,11 +405,13 @@ class POS {
                 document.getElementById('nuevo_cliente_email').value = '';
                 this.showNotification('Cliente creado correctamente');
             } else {
-                alert('Error: ' + (data.error || 'No se pudo crear el cliente'));
+                if (typeof showAlertModal === 'function') showAlertModal('Error: ' + (data.error || 'No se pudo crear el cliente'), 'error');
+                else alert('Error: ' + (data.error || 'No se pudo crear el cliente'));
             }
         } catch (err) {
             console.error(err);
-            alert('Error al crear el cliente. Intente de nuevo.');
+            if (typeof showAlertModal === 'function') showAlertModal('Error al crear el cliente. Intente de nuevo.', 'error');
+            else alert('Error al crear el cliente. Intente de nuevo.');
         } finally {
             if (btn) {
                 btn.disabled = false;
@@ -420,7 +425,8 @@ class POS {
         const metodoPagoId = document.getElementById('metodo_pago_select').value;
 
         if (!clienteId || !metodoPagoId) {
-            alert('Por favor busque y seleccione un cliente, o cree uno con el botón +');
+            if (typeof showAlertModal === 'function') showAlertModal('Por favor busque y seleccione un cliente, o cree uno con el botón +', 'warning');
+            else alert('Por favor busque y seleccione un cliente, o cree uno con el botón +');
             return;
         }
 
@@ -435,7 +441,8 @@ class POS {
         const tipoDocumento = tipoDocEl ? tipoDocEl.value : 'ticket';
 
         if (tipoDocumento === 'factura' && clienteId == window.posData?.clienteMostradorId) {
-            alert('Para factura debe seleccionar un cliente con NIT/CI. No puede usar Mostrador.');
+            if (typeof showAlertModal === 'function') showAlertModal('Para factura debe seleccionar un cliente con NIT/CI. No puede usar Mostrador.', 'warning');
+            else alert('Para factura debe seleccionar un cliente con NIT/CI. No puede usar Mostrador.');
             return;
         }
 
@@ -470,11 +477,13 @@ class POS {
                 // Mostrar modal de confirmación en la página (en lugar del alert del navegador)
                 this.showVentaCompletadaModal(data.venta_id, data.total);
             } else {
-                alert('Error: ' + data.error);
+                if (typeof showAlertModal === 'function') showAlertModal('Error: ' + data.error, 'error');
+                else alert('Error: ' + data.error);
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('Error al procesar el pago. Por favor intente nuevamente.');
+            if (typeof showAlertModal === 'function') showAlertModal('Error al procesar el pago. Por favor intente nuevamente.', 'error');
+            else alert('Error al procesar el pago. Por favor intente nuevamente.');
         } finally {
             confirmBtn.innerHTML = originalText;
             confirmBtn.disabled = false;

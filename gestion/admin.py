@@ -94,11 +94,10 @@ class PagoAdmin(admin.ModelAdmin):
     list_filter = ('validado', 'metodo_pago', 'fecha_pago')
     search_fields = ('venta__id', 'referencia')
     readonly_fields = ('fecha_pago', 'fecha_validacion', 'validado_por')
-    
+
     def save_model(self, request, obj, form, change):
-        # Si se marca como validado y no tiene validado_por, asignar el usuario actual
+        obj.full_clean()  # Valida Pago.clean(): suma de pagos <= total venta
         if obj.validado and not obj.validado_por:
             obj.validar_pago(request.user)
         else:
-            # Si ya está validado o no se está validando, guardar normalmente
             super().save_model(request, obj, form, change)

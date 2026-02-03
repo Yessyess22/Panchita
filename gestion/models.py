@@ -80,7 +80,7 @@ class Cliente(models.Model):
     nombre_completo = models.CharField(max_length=150)
     ci_nit = models.CharField(max_length=20, blank=True, null=True, unique=True)
     telefono = models.CharField(max_length=20, blank=True, null=True)
-    email = models.EmailField(blank=True, null=True)
+    email = models.EmailField(blank=True, null=True, unique=True)
     direccion = models.TextField(blank=True, null=True)
     fecha_registro = models.DateTimeField(auto_now_add=True)
     activo = models.BooleanField(default=True)
@@ -118,7 +118,7 @@ class MetodoPago(models.Model):
 
 class Promocion(models.Model):
     nombre = models.CharField(max_length=100)
-    descripcion = models.TextField()
+    descripcion = models.TextField(blank=True)
     descuento_porcentaje = models.DecimalField(
         max_digits=5,
         decimal_places=2,

@@ -310,28 +310,259 @@ body {
     background: #f9f9f9;
 }
 
-/* Alerts */
+/* Alerts: debajo del contenido (formularios, listas) como alerta visible */
+.messages-below-content {
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+}
+
+.messages-below-content .alert {
+    margin-bottom: 1rem;
+}
+
+.messages-below-content .alert:last-child {
+    margin-bottom: 0;
+}
+
 .alert {
-    padding: 1rem 1.5rem;
+    padding: 1rem 1.25rem;
     border-radius: var(--border-radius);
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     font-weight: 500;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.alert i {
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+    font-size: 1.2rem;
 }
 
 .alert-success {
     background: #d4edda;
     color: #155724;
-    border-left: 4px solid #28a745;
+    border: 1px solid #c3e6cb;
 }
 
+.alert-success i {
+    color: #28a745;
+}
+
+/* Mensajes de error/validación: alerta roja bien visible */
+.alert-error,
 .alert-danger {
-    background: #f8d7da;
-    color: #721c24;
-    border-left: 4px solid #b91c1c;
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 2px solid #dc2626;
+    font-weight: 600;
+}
+
+.alert-error i,
+.alert-danger i {
+    color: #dc2626;
 }
 
 .alert-info {
     background: #d1ecf1;
     color: #0c5460;
-    border-left: 4px solid #17a2b8;
+    border: 1px solid #bee5eb;
+}
+
+.alert-info i {
+    color: #17a2b8;
+}
+
+.alert-warning {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+.alert-warning i {
+    color: #ffc107;
+}
+
+/* Modal de alerta (mensaje con botón Aceptar) */
+.alert-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 1rem;
+    animation: alert-modal-fade 0.2s ease;
+}
+
+.alert-modal-overlay.alert-modal-hidden {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+@keyframes alert-modal-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.alert-modal-box {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    max-width: 420px;
+    width: 100%;
+    padding: 1.75rem;
+    text-align: center;
+    animation: alert-modal-scale 0.25s ease;
+}
+
+@keyframes alert-modal-scale {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.alert-modal-box.alert-modal-error,
+.alert-modal-box.alert-modal-danger {
+    border: 2px solid #dc2626;
+    background: #fef2f2;
+}
+
+.alert-modal-box.alert-modal-success {
+    border: 2px solid #16a34a;
+    background: #f0fdf4;
+}
+
+.alert-modal-box.alert-modal-warning {
+    border: 2px solid #eab308;
+    background: #fefce8;
+}
+
+.alert-modal-box.alert-modal-info {
+    border: 2px solid #0ea5e9;
+    background: #f0f9ff;
+}
+
+.alert-modal-icon {
+    margin-bottom: 1rem;
+}
+
+.alert-modal-icon i {
+    font-size: 3rem;
+}
+
+.alert-modal-box.alert-modal-error .alert-modal-icon i,
+.alert-modal-box.alert-modal-danger .alert-modal-icon i {
+    color: #dc2626;
+}
+
+.alert-modal-box.alert-modal-success .alert-modal-icon i {
+    color: #16a34a;
+}
+
+.alert-modal-box.alert-modal-warning .alert-modal-icon i {
+    color: #ca8a04;
+}
+
+.alert-modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 0.75rem 0;
+    color: #1f2937;
+}
+
+.alert-modal-box.alert-modal-error .alert-modal-title,
+.alert-modal-box.alert-modal-danger .alert-modal-title {
+    color: #b91c1c;
+}
+
+.alert-modal-messages {
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.alert-modal-text {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #374151;
+}
+
+.alert-modal-box.alert-modal-error .alert-modal-text,
+.alert-modal-box.alert-modal-danger .alert-modal-text {
+    color: #991b1b;
+}
+
+.alert-modal-btn {
+    display: inline-block;
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: var(--panchita-red);
+    color: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    transition: background 0.2s, transform 0.1s;
+}
+
+.alert-modal-btn:hover {
+    background: var(--panchita-red-dark);
+    transform: translateY(-1px);
+}
+
+.alert-modal-btn:focus {
+    outline: 2px solid var(--panchita-yellow);
+    outline-offset: 2px;
+}
+
+/* Alerta debajo del campo (ej. Nombre del producto) - color rojo forzado */
+.alert-inline {
+    margin-top: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #c41e3a !important;
+}
+
+.alert-inline.alert-error {
+    background: #fff5f5 !important;
+    color: #c41e3a !important;
+    border: 1px solid #c41e3a !important;
+    border-left: 4px solid #c41e3a !important;
+    font-weight: 600;
+}
+
+.alert-inline.alert-error,
+.alert-inline.alert-error p,
+.alert-inline.alert-error .alert-inline-text {
+    color: #c41e3a !important;
+}
+
+.alert-inline-text {
+    margin: 0;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    color: #c41e3a !important;
+}
+
+.alert-inline-text i,
+.alert-inline.alert-error i {
+    color: #c41e3a !important;
+    flex-shrink: 0;
+    margin-top: 0.15rem;
 }
